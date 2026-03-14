@@ -14,10 +14,21 @@ where season = ${inputs.season.value}
 order by constructor_name
 ```
 
+```sql pairings
+select distinct
+    driver_1_code || '|' || driver_2_code as pairing_value,
+    driver_1_code || ' vs ' || driver_2_code as pairing_label
+from snowflake.mart_race_h2h
+where season = ${inputs.season.value}
+  and constructor_id = '${inputs.constructor.value}'
+order by pairing_label
+```
+
 ```sql quali_filtered
 select * from snowflake.mart_qualifying_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 order by round
 ```
 
@@ -25,13 +36,14 @@ order by round
 select * from snowflake.mart_race_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 order by round
 ```
 
 ```sql points_filtered
 select * from snowflake.mart_points_trajectory
 where season = ${inputs.season.value}
-  and constructor_id = '${inputs.constructor.value}'
+  and driver_code in (split_part('${inputs.pairing.value}', '|', 1), split_part('${inputs.pairing.value}', '|', 2))
 order by round
 ```
 
@@ -46,6 +58,7 @@ select
 from snowflake.mart_qualifying_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
   and both_set_time = true
 ```
 
@@ -60,11 +73,13 @@ select
 from snowflake.mart_race_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 ```
 
 ```sql quali_delta
 select
     round,
+    round_label,
     abs(gap_ms) as gap_abs_ms,
     faster_driver_code,
     driver_1_code || ' (' || driver_1_time_ms || ' ms)' as d1_label,
@@ -73,6 +88,7 @@ select
 from snowflake.mart_qualifying_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
   and both_set_time = true
 order by round
 ```
@@ -84,6 +100,8 @@ from (
     from snowflake.mart_race_h2h
     where season = ${inputs.season.value}
       and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
       and race_winner_code != 'TIE'
 )
 group by driver_code
@@ -97,6 +115,7 @@ from (
     from snowflake.mart_qualifying_h2h
     where season = ${inputs.season.value}
       and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
       and faster_driver_code != 'TIE'
       and both_set_time = true
 )
@@ -105,10 +124,11 @@ order by wins desc
 ```
 
 ```sql race_points_swing
-select round, points_swing, driver_1_code, driver_2_code, points_leader
+select round, round_label, points_swing, driver_1_code, driver_2_code, points_leader
 from (
     select
         round,
+        round_label,
         driver_1_points - driver_2_points as points_swing,
         driver_1_code,
         driver_2_code,
@@ -125,14 +145,17 @@ from (
     from snowflake.mart_race_h2h
     where season = ${inputs.season.value}
       and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 )
 where points_swing != 0
-order by sort_priority, round
+order by round
 ```
 
 ```sql race_position_gap
 select
     round,
+    round_label,
     driver_2_finish - driver_1_finish as position_gap,
     race_winner_code as "H2H Winner",
     driver_1_code,
@@ -146,13 +169,15 @@ select
 from snowflake.mart_race_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 order by round
 ```
 
 ```sql race_h2h_cumulative
-select round, driver_code, cumulative_wins from (
+select round, round_label, driver_code, cumulative_wins from (
     select
         round,
+        round_label,
         driver_1_code as driver_code,
         1 as driver_order,
         sum(case when race_winner_code = driver_1_code then 1 else 0 end)
@@ -160,11 +185,13 @@ select round, driver_code, cumulative_wins from (
     from snowflake.mart_race_h2h
     where season = ${inputs.season.value}
       and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 
     union all
 
     select
         round,
+        round_label,
         driver_2_code as driver_code,
         2 as driver_order,
         sum(case when race_winner_code = driver_2_code then 1 else 0 end)
@@ -172,6 +199,7 @@ select round, driver_code, cumulative_wins from (
     from snowflake.mart_race_h2h
     where season = ${inputs.season.value}
       and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 )
 order by round, driver_order
 ```
@@ -201,6 +229,20 @@ order by round, driver_order
     title="Constructor"
 />
 
+<Dropdown
+    name=pairing
+    data={pairings}
+    value=pairing_value
+    label=pairing_label
+    title="Driver Pairing"
+/>
+
+</div>
+
+<div class="f1-driver-legend">
+    <span class="f1-driver-chip red">{race_filtered[0].driver_1_code}</span> <span class="f1-driver-fullname">{race_filtered[0].driver_1_name}</span>
+    <span class="f1-driver-vs">vs</span>
+    <span class="f1-driver-chip teal">{race_filtered[0].driver_2_code}</span> <span class="f1-driver-fullname">{race_filtered[0].driver_2_name}</span>
 </div>
 
 <div class="f1-section">
@@ -212,7 +254,7 @@ order by round, driver_order
 <BigValue
     data={quali_stats}
     value=d1_quali_wins
-    title="{quali_stats[0].d1_code} Quali Wins"
+    title="{quali_stats[0].d1_code} Quali Head-to-Head"
 />
 
 </div>
@@ -221,7 +263,7 @@ order by round, driver_order
 <BigValue
     data={quali_stats}
     value=d2_quali_wins
-    title="{quali_stats[0].d2_code} Quali Wins"
+    title="{quali_stats[0].d2_code} Quali Head-to-Head"
 />
 
 </div>
@@ -239,10 +281,12 @@ order by round, driver_order
 
 <BarChart
     data={quali_delta}
-    x=round
+    x=round_label
     y=gap_abs_ms
     series=faster_driver_code
-    title="Qualifying Gap (ms) — Bigger Bar = Larger Margin"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Quali Head-to-Head - Gap (ms), Bigger Bar = Larger Margin"
     yAxisTitle="Gap (ms)"
     xAxisTitle="Round"
     labels=true
@@ -261,7 +305,7 @@ order by round, driver_order
 <BigValue
     data={race_stats}
     value=d1_race_wins
-    title="{race_stats[0].d1_code} Race H2H Wins"
+    title="{race_stats[0].d1_code} Race Head-to-Head"
 />
 
 </div>
@@ -270,7 +314,7 @@ order by round, driver_order
 <BigValue
     data={race_stats}
     value=d2_race_wins
-    title="{race_stats[0].d2_code} Race H2H Wins"
+    title="{race_stats[0].d2_code} Race Head-to-Head"
 />
 
 </div>
@@ -297,10 +341,12 @@ order by round, driver_order
 
 <BarChart
     data={race_points_swing}
-    x=round
+    x=round_label
     y=points_swing
     series=points_leader
-    title="Points Swing Per Round — Bars Above Zero = {race_points_swing[0].driver_1_code} Scored More"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Points Swing Per Round - Bars Above Zero = {race_points_swing[0].driver_1_code} Scored More"
     yAxisTitle="Points Advantage"
     xAxisTitle="Round"
     labels=true
@@ -314,11 +360,13 @@ order by round, driver_order
 
 <ScatterPlot
     data={race_position_gap}
-    x=round
+    x=round_label
     y=position_gap
     series="H2H Winner"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
     tooltipTitle=winner_label
-    title="Finish Position Gap — Above Zero = {race_position_gap[0].driver_1_code} Ahead"
+    title="Finish Position Gap - Above Zero = {race_position_gap[0].driver_1_code} Ahead"
     yAxisTitle="Position Gap"
     xAxisTitle="Round"
     pointSize=10
@@ -331,10 +379,12 @@ order by round, driver_order
 
 <LineChart
     data={race_h2h_cumulative}
-    x=round
+    x=round_label
     y=cumulative_wins
     series=driver_code
-    title="Head-to-Head Race Wins — Running Score"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Race Head-to-Head - Running Score"
     yAxisTitle="Cumulative Wins"
     xAxisTitle="Round"
 />
@@ -348,6 +398,7 @@ order by round, driver_order
     rows=8
 >
     <Column id=round title="Rd" />
+    <Column id=locality title="Race" />
     <Column id=driver_1_code title="Driver 1" />
     <Column id=driver_1_grid title="Grid" />
     <Column id=driver_1_finish title="Finish" />
@@ -369,10 +420,12 @@ order by round, driver_order
 
 <LineChart
     data={points_filtered}
-    x=round
+    x=round_label
     y=cumulative_points
     series=driver_code
-    title="Championship Points — Teammate Comparison"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Championship Points - Teammate Comparison"
     xAxisTitle="Round"
     yAxisTitle="Cumulative Points"
 />
@@ -380,14 +433,75 @@ order by round, driver_order
 </div>
 </div>
 
+```sql race_time_gap
+select
+    round,
+    round_label,
+    d1_code,
+    d2_code,
+    d1_total_time,
+    d2_total_time,
+    round(d2_total_time - d1_total_time, 3) as time_gap_s,
+    case
+        when d1_total_time < d2_total_time then d1_code
+        when d2_total_time < d1_total_time then d2_code
+        else 'Even'
+    end as faster_driver
+from (
+    select
+        p1.round,
+        p1.round_label,
+        p1.driver_code as d1_code,
+        p2.driver_code as d2_code,
+        sum(p1.lap_time_s) as d1_total_time,
+        sum(p2.lap_time_s) as d2_total_time
+    from snowflake.mart_lap_pace p1
+    inner join snowflake.mart_lap_pace p2
+        on p1.season = p2.season
+        and p1.round = p2.round
+        and p1.lap_number = p2.lap_number
+        and p1.constructor_id = p2.constructor_id
+        and p1.driver_code != p2.driver_code
+    where p1.season = ${inputs.season.value}
+      and p1.constructor_id = '${inputs.constructor.value}'
+      and p1.driver_code = split_part('${inputs.pairing.value}', '|', 1)
+      and p2.driver_code = split_part('${inputs.pairing.value}', '|', 2)
+    group by p1.round, p1.round_label, p1.driver_code, p2.driver_code
+)
+where d1_total_time > 0 and d2_total_time > 0
+order by round
+```
+
 <div class="f1-section orange">
     <div class="f1-section-title">Lap Pace Comparison</div>
     <div class="f1-section-subtitle">Lap-by-lap pace comparison between teammates. Safety car laps filtered out.</div>
 
+    <div class="f1-chart-wrap">
+
+<BarChart
+    data={race_time_gap}
+    x=round_label
+    y=time_gap_s
+    series=faster_driver
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Total Race Time Gap (seconds) - Positive = {race_time_gap[0].d1_code} Faster"
+    yAxisTitle="Time Gap (s)"
+    xAxisTitle="Round"
+    labels=true
+    type=stacked
+>
+    <ReferenceLine y=0 />
+</BarChart>
+
+<div class="f1-chart-note">DNF rounds compare only laps both drivers completed. Safety car laps filtered.</div>
+</div>
+
 ```sql rounds_available
-select distinct round from snowflake.mart_race_h2h
+select distinct round, round_label from snowflake.mart_race_h2h
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
 order by round
 ```
 
@@ -397,6 +511,7 @@ order by round
     name=pace_round
     data={rounds_available}
     value=round
+    label=round_label
     defaultValue={1}
     title="Select Round"
 />
@@ -408,6 +523,7 @@ select * from snowflake.mart_lap_pace
 where season = ${inputs.season.value}
   and constructor_id = '${inputs.constructor.value}'
   and round = ${inputs.pace_round.value}
+  and driver_code in (split_part('${inputs.pairing.value}', '|', 1), split_part('${inputs.pairing.value}', '|', 2))
 order by lap_number
 ```
 
@@ -418,7 +534,9 @@ order by lap_number
     x=lap_number
     y=lap_time_s
     series=driver_code
-    title="Lap-by-Lap Pace — Teammate Comparison (Round {inputs.pace_round.value})"
+    seriesColors={{ [race_stats[0].d1_code]: '#E10600', [race_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Lap-by-Lap Pace - Teammate Comparison ({lap_pace_filtered[0].round_label})"
     xAxisTitle="Lap Number"
     yAxisTitle="Lap Time (seconds)"
 />

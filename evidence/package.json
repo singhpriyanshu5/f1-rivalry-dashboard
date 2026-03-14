@@ -8,7 +8,8 @@
     "test": "evidence build",
     "sources": "evidence sources",
     "sources:strict": "evidence sources --strict",
-    "preview": "evidence preview"
+    "preview": "evidence preview",
+    "postinstall": "patch-package"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -25,6 +26,7 @@
     "axios": "^1.7.4"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "patch-package": "^8.0.1"
   }
 }

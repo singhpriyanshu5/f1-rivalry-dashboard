@@ -157,6 +157,52 @@
         margin: 1rem 0 2rem;
     }
 
+    /* ── Driver legend ── */
+    :global(.f1-driver-legend) {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: #12121e;
+        border: 1px solid #1c1c2e;
+        border-radius: 6px;
+        margin: -0.5rem 0 1.5rem;
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.03em;
+    }
+    :global(.f1-driver-chip) {
+        display: inline-block;
+        padding: 0.15rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    :global(.f1-driver-chip.red) {
+        background: rgba(225, 6, 0, 0.2);
+        border: 1px solid #E10600;
+        color: #E10600;
+    }
+    :global(.f1-driver-chip.teal) {
+        background: rgba(0, 210, 190, 0.2);
+        border: 1px solid #00D2BE;
+        color: #00D2BE;
+    }
+    :global(.f1-driver-fullname) {
+        color: #c8c8d4;
+        font-weight: 400;
+    }
+    :global(.f1-driver-vs) {
+        color: #666;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        margin: 0 0.3rem;
+    }
+
     /* ── Section container ── */
     :global(.f1-section) {
         background: #12121e !important;
@@ -289,6 +335,14 @@
         letter-spacing: 0.08em;
         color: #6b6b80;
         margin-bottom: 0.5rem;
+    }
+
+    :global(.f1-chart-note) {
+        font-family: 'Saira', sans-serif;
+        font-size: 0.7rem;
+        color: #6b6b80;
+        margin-top: 0.25rem;
+        font-style: italic;
     }
 
     :global(.f1-detail-table) {
@@ -456,6 +510,7 @@
         display: inline-flex;
         align-items: flex-end;
         gap: 0.75rem;
+        margin-top: 1.5rem;
         margin-bottom: 1rem;
     }
 

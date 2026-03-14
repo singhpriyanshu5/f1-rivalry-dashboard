@@ -1,0 +1,115 @@
+diff --git a/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/Dropdown.svelte b/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/Dropdown.svelte
+index cac96a3..d6aa469 100644
+--- a/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/Dropdown.svelte
++++ b/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/Dropdown.svelte
+@@ -248,6 +248,30 @@
+ 		errors = [...errors, $query.error];
+ 		hasQueryError = true;
+ 	}
++
++	// Cascading dropdown fix: when query data changes and current selection
++	// no longer exists in the new options, auto-select the first available option.
++	// Uses setTimeout to fire after batchUp's 100ms window completes for add/remove.
++	let prevDataFingerprint = '';
++	let cascadeTimer = null;
++	$: if (hasQuery && opts?.length > 0 && !multiple) {
++		const newFingerprint = opts.map(o => String(o[value] ?? o.value)).join('|');
++		if (newFingerprint !== prevDataFingerprint) {
++			prevDataFingerprint = newFingerprint;
++			const currentValue = $selectedOptions?.[0]?.value;
++			const stillExists = currentValue != null && opts.some(o => (o[value] ?? o.value) === currentValue);
++			if (!stillExists) {
++				if (cascadeTimer) clearTimeout(cascadeTimer);
++				const capturedOpts = opts;
++				cascadeTimer = setTimeout(() => {
++					const firstOpt = capturedOpts[0];
++					const optValue = firstOpt[value] ?? firstOpt.value;
++					const optLabel = firstOpt[label] ?? firstOpt.label;
++					toggleSelected({ value: optValue, label: optLabel });
++				}, 250);
++			}
++		}
++	}
+ </script>
+ 
+ <slot />
+diff --git a/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/dropdownOptionStore.js b/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/dropdownOptionStore.js
+index 411efdf..c02612a 100644
+--- a/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/dropdownOptionStore.js
++++ b/node_modules/@evidence-dev/core-components/dist/atoms/inputs/dropdown/dropdownOptionStore.js
+@@ -159,16 +159,22 @@ export const dropdownOptionStore = (opts = {}) => {
+ 				(...removeOptions) => {
+ 					if (destroyed) return;
+ 					const opts = removeOptions.flat();
++					let hadSelectedRemoval = false;
+ 					options.update(($options) => {
+ 						return $options.reduce((a, v) => {
+ 							if (opts.find((x) => optEq(x, v))) {
+-								if (v.selected) v.__removeOnDeselect = true;
+-								else return a;
++								if (v.selected) hadSelectedRemoval = true;
++								return a; // Always remove — don't preserve stale selected options
+ 							}
+ 							a.push(v);
+ 							return a;
+ 						}, /** @type {DropdownOption[]} */ ([]));
+ 					});
++					// If we removed a selected option in single-select mode,
++					// re-enable selectFirst so the next addOptions picks the first available
++					if (hadSelectedRemoval && !config.multiselect) {
++						selectFirst = true;
++					}
+ 				},
+ 				100
+ 			)
+diff --git a/node_modules/@evidence-dev/core-components/dist/unsorted/viz/core/_Chart.svelte b/node_modules/@evidence-dev/core-components/dist/unsorted/viz/core/_Chart.svelte
+index 1c63e0b..ca061d5 100644
+--- a/node_modules/@evidence-dev/core-components/dist/unsorted/viz/core/_Chart.svelte
++++ b/node_modules/@evidence-dev/core-components/dist/unsorted/viz/core/_Chart.svelte
+@@ -972,18 +972,22 @@
+ 								xVal,
+ 								xFormat
+ 							)}</span>`;
+-							for (let i = params.length - 1; i >= 0; i--) {
+-								if (params[i].seriesName !== 'stackTotal') {
+-									yVal = params[i].value[swapXY ? 0 : 1];
++							// Sort tooltip entries by value descending for clearer readability
++							const sorted = params.slice().sort((a, b) => {
++								const aVal = a.value[swapXY ? 0 : 1];
++								const bVal = b.value[swapXY ? 0 : 1];
++								return (bVal ?? 0) - (aVal ?? 0);
++							});
++							for (let i = 0; i < sorted.length; i++) {
++								if (sorted[i].seriesName !== 'stackTotal') {
++									yVal = sorted[i].value[swapXY ? 0 : 1];
+ 									output =
+ 										output +
+-										`<br> <span style='font-size: 11px;'>${params[i].marker} ${
+-											params[i].seriesName
++										`<br> <span style='font-size: 11px;'>${sorted[i].marker} ${
++											sorted[i].seriesName
+ 										}<span/><span style='float:right; margin-left: 10px; font-size: 12px;'>${formatValue(
+ 											yVal,
+-											// Not sure if this will work. Need to check with multi series on both axes
+-											// Check if echarts does the order in the same way - y first, then y2
+-											getYAxisIndex(params[i].componentIndex, yCount, y2Count) === 0
++											getYAxisIndex(sorted[i].componentIndex, yCount, y2Count) === 0
+ 												? yFormat
+ 												: y2Format
+ 										)}</span>`;
+diff --git a/node_modules/@evidence-dev/core-components/dist/unsorted/viz/scatter/Scatter.svelte b/node_modules/@evidence-dev/core-components/dist/unsorted/viz/scatter/Scatter.svelte
+index b6ad1f3..7089376 100644
+--- a/node_modules/@evidence-dev/core-components/dist/unsorted/viz/scatter/Scatter.svelte
++++ b/node_modules/@evidence-dev/core-components/dist/unsorted/viz/scatter/Scatter.svelte
+@@ -81,11 +81,6 @@
+ 								params.value[2],
+ 								'0'
+ 							)}</span><br/>
+-                            ${formatTitle(
+-															series
+-														)}: <span style='float:right; margin-left: 15px;'>${formatValue(
+-															params.seriesName
+-														)}</span><br/>
+                             ${formatTitle(
+ 															x,
+ 															xFormat

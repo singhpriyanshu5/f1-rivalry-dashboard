@@ -1,45 +1,12 @@
 -- Race head-to-head: teammate comparison on race results
+-- Pairs whoever actually raced together per round (handles mid-season driver swaps)
 -- Includes DNF categories from dim_dnf_status
 
-with driver_starts as (
-    select
-        season,
-        constructor_id,
-        driver_id,
-        count(*) as num_starts
-    from {{ ref('stg_results') }}
-    group by 1, 2, 3
-),
-
-ranked as (
-    select *,
-        row_number() over (
-            partition by season, constructor_id
-            order by num_starts desc, driver_id
-        ) as rn
-    from driver_starts
-),
-
-primary_drivers as (
-    select season, constructor_id, driver_id
-    from ranked
-    where rn <= 2
-),
-
-results_filtered as (
-    select r.*
-    from {{ ref('stg_results') }} r
-    inner join primary_drivers pd
-        on r.season = pd.season
-        and r.constructor_id = pd.constructor_id
-        and r.driver_id = pd.driver_id
-),
-
-results_with_dnf as (
+with results_with_dnf as (
     select
         r.*,
         coalesce(d.category, 'finished') as dnf_category
-    from results_filtered r
+    from {{ ref('stg_results') }} r
     left join {{ ref('dim_dnf_status') }} d
         on r.status = d.status
 ),
@@ -77,15 +44,18 @@ teammate_pairs as (
 )
 
 select
-    *,
+    tp.*,
+    dr.round_label,
+    dr.locality,
     case
-        when driver_1_finish < driver_2_finish then driver_1_code
-        when driver_2_finish < driver_1_finish then driver_2_code
-        -- If both DNF, compare laps completed
-        when driver_1_laps > driver_2_laps then driver_1_code
-        when driver_2_laps > driver_1_laps then driver_2_code
+        when tp.driver_1_finish < tp.driver_2_finish then tp.driver_1_code
+        when tp.driver_2_finish < tp.driver_1_finish then tp.driver_2_code
+        when tp.driver_1_laps > tp.driver_2_laps then tp.driver_1_code
+        when tp.driver_2_laps > tp.driver_1_laps then tp.driver_2_code
         else 'TIE'
     end as race_winner_code,
-    driver_1_finish - driver_1_grid as driver_1_places_gained,
-    driver_2_finish - driver_2_grid as driver_2_places_gained
-from teammate_pairs
+    tp.driver_1_finish - tp.driver_1_grid as driver_1_places_gained,
+    tp.driver_2_finish - tp.driver_2_grid as driver_2_places_gained
+from teammate_pairs tp
+left join {{ ref('dim_races') }} dr
+    on tp.season = dr.season and tp.round = dr.round

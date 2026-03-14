@@ -1,5 +1,5 @@
 -- Teammate lap pace comparison per round
--- Joins laps with qualifying to get constructor context
+-- Joins laps with results to get constructor context (more complete than qualifying)
 -- Filters safety car laps (>1.5x median lap time per round)
 
 with driver_constructors as (
@@ -10,7 +10,7 @@ with driver_constructors as (
         driver_code,
         constructor_id,
         constructor_name
-    from {{ ref('stg_qualifying') }}
+    from {{ ref('stg_results') }}
 ),
 
 laps_with_team as (
@@ -52,13 +52,17 @@ filtered as (
 )
 
 select
-    season,
-    round,
-    lap_number,
-    driver_id,
-    driver_code,
-    constructor_id,
-    constructor_name,
-    lap_time_s,
-    position
-from filtered
+    f.season,
+    f.round,
+    f.lap_number,
+    f.driver_id,
+    f.driver_code,
+    f.constructor_id,
+    f.constructor_name,
+    f.lap_time_s,
+    f.position,
+    dr.round_label,
+    dr.locality
+from filtered f
+left join {{ ref('dim_races') }} dr
+    on f.season = dr.season and f.round = dr.round
