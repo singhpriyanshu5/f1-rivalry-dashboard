@@ -4,6 +4,10 @@ An end-to-end data engineering project that visualizes Formula 1 teammate rivalr
 
 **Live Dashboard:** [singhpriyanshu5.github.io/f1-rivalry-dashboard](https://singhpriyanshu5.github.io/f1-rivalry-dashboard/)
 
+![Dashboard Preview](screenshots/dashboard-full.png)
+
+## System Architecture
+
 ![System Architecture](agent_outputs/architecture/f1-system-architecture.png)
 
 ## Features
