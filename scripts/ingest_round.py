@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "airflow", "dag
 import snowflake.connector
 from utils.jolpica_client import (
     fetch_qualifying, fetch_results, fetch_driver_standings,
-    fetch_laps, fetch_pit_stops,
+    fetch_laps, fetch_pit_stops, fetch_schedule,
 )
 
 
@@ -69,30 +69,35 @@ def load_jolpica_array(records, table_name, season, round_num):
 
 
 def ingest_round(season, round_num):
-    print(f"1/5 Qualifying ({season} R{round_num})...")
+    print(f"1/6 Qualifying ({season} R{round_num})...")
     data = fetch_qualifying(season, round_num)
     print(f"  Fetched {len(data)} records")
     load_jolpica_array(data, "qualifying", season, round_num)
 
-    print("2/5 Results...")
+    print("2/6 Results...")
     data = fetch_results(season, round_num)
     print(f"  Fetched {len(data)} records")
     load_jolpica_array(data, "results", season, round_num)
 
-    print("3/5 Standings...")
+    print("3/6 Standings...")
     data = fetch_driver_standings(season, round_num)
     print(f"  Fetched {len(data)} records")
     load_jolpica_array(data, "driver_standings", season, round_num)
 
-    print("4/5 Laps...")
+    print("4/6 Laps...")
     data = fetch_laps(season, round_num)
     print(f"  Fetched {len(data)} timing entries")
     load_jolpica_array(data, "jolpica_laps", season, round_num)
 
-    print("5/5 Pit stops...")
+    print("5/6 Pit stops...")
     data = fetch_pit_stops(season, round_num)
     print(f"  Fetched {len(data)} records")
     load_jolpica_array(data, "jolpica_pit_stops", season, round_num)
+
+    print("6/6 Schedule...")
+    races = fetch_schedule(season)
+    print(f"  Fetched {len(races)} races")
+    load_jolpica_array(races, "schedule", season, round_num=0)
 
     print(f"\nDone — {season} Round {round_num} loaded into Snowflake.")
 

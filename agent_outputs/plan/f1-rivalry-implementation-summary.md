@@ -214,12 +214,32 @@
 - `npm ci` triggers `postinstall` → `patch-package` applies node_modules patches automatically
 - Subsequent deploys: just commit + push to `main`
 
+### ~~Update Airflow DAG~~ ✅ DONE (2026-03-14)
+- Removed OpenF1 entirely — all ingestion is Jolpica-only
+- Schedule: `0 2 * * 0,1` (Sunday + Monday 2am UTC, post-Saturday + post-Sunday)
+- Auto-detects current season + latest round via `ShortCircuitOperator` — no manual params for scheduled runs
+- Short-circuits on non-race weekends (no wasted API calls)
+- **Backfill mode**: manual trigger with `mode=backfill`, `season`, `start_round`, `end_round` params
+- Rounds run sequentially with 2s delay (Jolpica 429 rate limit protection)
+- Pipeline: detect_rounds → ingest_rounds → dbt_run → trigger_evidence_build
+- `scripts/ingest_round.py` updated to include schedule ingestion (step 6/6)
+- **F1 Airflow instance running** on `localhost:8081` (port 8081 webserver, 5433 Postgres) — separate from EV project
+  - `COMPOSE_PROJECT_NAME=f1-airflow` isolates containers
+  - `dbt-snowflake` installed in container, `../dbt` mounted at `/opt/airflow/dbt`
+  - `dbt_run` task runs `dbt deps` → `dbt run` → `dbt test`
+  - Credentials: admin/admin
+- **2026 season loaded** via backfill (R1) + scheduled run (R2 qualifying). VER didn't qualify R1 — qualifying H2H only shows R2, race H2H shows both.
+- **Jolpica client fix**: `fetch_laps` handles missing `position` field in timing entries (KeyError fix)
+- **GITHUB_PAT** needs `Actions: Read and write` permission for workflow dispatch
+- See: [`agent_outputs/plan/airflow-dag-scheduling.md`](./airflow-dag-scheduling.md) for full design notes
+
 ### Polish (remaining)
-1. **Update Airflow DAG** — remove OpenF1 tasks, add Jolpica laps + pit stops
-2. **Add `last_updated` footer** to dashboard
-3. **Write README** with architecture diagram and setup instructions
-4. **Clean up** deprecated OpenF1 raw tables and client code
-5. **Optionally ingest 2023 season** for historical comparison
+1. ~~**Update Airflow DAG** — remove OpenF1 tasks, add Jolpica laps + pit stops~~ ✅
+2. ~~**Stand up F1 Airflow instance**~~ ✅ — running on port 8081
+3. **Add `last_updated` footer** to dashboard
+4. **Write README** with architecture diagram and setup instructions
+5. **Clean up** deprecated OpenF1 raw tables and client code
+6. **Optionally ingest 2023 season** for historical comparison
 
 ### ~~UI Redesign~~ ✅ DONE (2026-03-13)
 - Dark telemetry theme with Saira fonts, F1 color palette

@@ -78,8 +78,8 @@ def fetch_laps(season: int, round_num: int) -> list[dict]:
                 all_timings.append({
                     "lap_number": lap_num,
                     "driver_id": timing["driverId"],
-                    "position": int(timing["position"]),
-                    "time": timing["time"],
+                    "position": int(timing["position"]) if "position" in timing else None,
+                    "time": timing.get("time"),
                 })
         total = int(data["MRData"]["total"])
         offset += limit

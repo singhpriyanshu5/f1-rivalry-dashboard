@@ -1,23 +1,38 @@
 """F1 Rivalry Dashboard — Master Pipeline DAG.
 
-Flow: API fetch → Snowflake raw → dbt → trigger Evidence rebuild
-Scheduled weekly during F1 season, catchup=False.
+Flow: Jolpica API → Snowflake raw → dbt → trigger Evidence rebuild
+Runs twice per race weekend:
+  - Sunday  2am UTC (post-Saturday): qualifying data available
+  - Monday  2am UTC (post-Sunday):  race results, standings, laps, pit stops available
+
+Auto-detects the current season and most recent race round.
+Skips non-race weekends gracefully (no data to ingest → short-circuits).
+
+Manual trigger supports backfill via params:
+  - mode: "latest" (default, auto-detect) or "backfill"
+  - season: e.g. 2026
+  - start_round / end_round: range of rounds to load
 """
+
+from __future__ import annotations
 
 import json
 import os
 import logging
+import time
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.operators.python import PythonOperator, ShortCircuitOperator
 from airflow.models.param import Param
 
 import snowflake.connector
 import requests as http_requests
 
-from utils.jolpica_client import fetch_qualifying, fetch_results, fetch_driver_standings, fetch_schedule
-from utils.openf1_client import fetch_race_sessions, fetch_laps, fetch_stints, fetch_pit_stops
+from utils.jolpica_client import (
+    fetch_qualifying, fetch_results, fetch_driver_standings,
+    fetch_laps, fetch_pit_stops, fetch_schedule,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,215 +51,180 @@ def get_snowflake_conn():
         role=os.environ.get("SNOWFLAKE_ROLE", "ACCOUNTADMIN"),
         warehouse=os.environ.get("SNOWFLAKE_WAREHOUSE", "COMPUTE_WH"),
         database=os.environ.get("SNOWFLAKE_DATABASE", "F1_ANALYTICS"),
+        schema="RAW",
     )
 
 
-def _load_records_to_raw(
-    records: list[dict],
-    table_name: str,
-    season: int,
-    round_num: int,
-    unique_keys: list[str],
-    extra_cols: str,
-    extra_vals: str,
-    source_label: str,
-):
-    """Load JSON records directly into Snowflake raw table.
+def _load_array_to_raw(records, table_name, season, round_num):
+    """Store API response array as one VARIANT row per (season, round).
 
-    Uses temp table approach: insert as VARCHAR, then INSERT...SELECT with PARSE_JSON.
-    MERGE for idempotency.
+    DELETE+INSERT for idempotency. Uses temp table approach per lessons learned.
     """
     if not records:
-        logger.info(f"No records for {table_name} season={season} round={round_num}")
+        logger.info(f"No records for {table_name} — skipping")
         return
 
     conn = get_snowflake_conn()
     cur = conn.cursor()
     raw_table = f"RAW.RAW_{table_name.upper()}"
+    source_label = f"jolpica/{season}/{round_num}/{table_name}"
 
     try:
-        cur.execute(f"CREATE TEMPORARY TABLE _tmp_{table_name} (json_str VARCHAR)")
-
-        for record in records:
-            cur.execute(
-                f"INSERT INTO _tmp_{table_name} (json_str) VALUES (%s)",
-                (json.dumps(record, default=str),)
-            )
-
-        merge_key_conditions = " AND ".join(
-            f"target.{k} = source.{k}" for k in unique_keys
+        cur.execute(
+            f"DELETE FROM {raw_table} WHERE season = %s AND round = %s",
+            (season, round_num),
         )
-
+        cur.execute("CREATE TEMPORARY TABLE _tmp_jolpica (json_str VARCHAR)")
+        cur.execute(
+            "INSERT INTO _tmp_jolpica (json_str) VALUES (%s)",
+            (json.dumps(records, default=str),),
+        )
         cur.execute(f"""
-            MERGE INTO {raw_table} AS target
-            USING (
-                SELECT
-                    PARSE_JSON(json_str) AS raw_data,
-                    {extra_vals},
-                    CURRENT_TIMESTAMP() AS _ingested_at,
-                    '{source_label}' AS _source_file
-                FROM _tmp_{table_name}
-            ) AS source ({', '.join(['raw_data', *unique_keys, '_ingested_at', '_source_file'])})
-            ON {merge_key_conditions}
-            WHEN MATCHED THEN UPDATE SET
-                raw_data = source.raw_data,
-                _ingested_at = source._ingested_at,
-                _source_file = source._source_file
-            WHEN NOT MATCHED THEN INSERT
-                (raw_data, {extra_cols}, _ingested_at, _source_file)
-                VALUES (source.raw_data, {', '.join(f'source.{k}' for k in unique_keys)}, source._ingested_at, source._source_file)
+            INSERT INTO {raw_table} (raw_data, season, round, _ingested_at, _source_file)
+            SELECT PARSE_JSON(json_str), {season}, {round_num},
+                   CURRENT_TIMESTAMP(), '{source_label}'
+            FROM _tmp_jolpica
         """)
-
-        logger.info(f"Loaded {len(records)} records into {raw_table}")
+        cur.execute("DROP TABLE _tmp_jolpica")
+        logger.info(f"Loaded {len(records)} records (1 row) into {raw_table}")
     finally:
         cur.close()
         conn.close()
 
 
-# ─── Jolpica: fetch + load in one step ───────────────────────────────────────
+def _ingest_single_round(season, round_num):
+    """Ingest all 6 data sources for a single round."""
+    logger.info(f"Ingesting {season} R{round_num}...")
 
-def ingest_qualifying(**context):
-    season = int(context["params"]["season"])
-    round_num = int(context["params"]["round"])
     data = fetch_qualifying(season, round_num)
-    _load_records_to_raw(
-        records=data,
-        table_name="qualifying",
-        season=season,
-        round_num=round_num,
-        unique_keys=["season", "round"],
-        extra_cols="season, round",
-        extra_vals=f"{season}, {round_num}",
-        source_label=f"jolpica/{season}/{round_num}/qualifying",
-    )
+    _load_array_to_raw(data, "qualifying", season, round_num)
 
-
-def ingest_results(**context):
-    season = int(context["params"]["season"])
-    round_num = int(context["params"]["round"])
     data = fetch_results(season, round_num)
-    _load_records_to_raw(
-        records=data,
-        table_name="results",
-        season=season,
-        round_num=round_num,
-        unique_keys=["season", "round"],
-        extra_cols="season, round",
-        extra_vals=f"{season}, {round_num}",
-        source_label=f"jolpica/{season}/{round_num}/results",
-    )
+    _load_array_to_raw(data, "results", season, round_num)
 
-
-def ingest_standings(**context):
-    season = int(context["params"]["season"])
-    round_num = int(context["params"]["round"])
     data = fetch_driver_standings(season, round_num)
-    _load_records_to_raw(
-        records=data,
-        table_name="driver_standings",
-        season=season,
-        round_num=round_num,
-        unique_keys=["season", "round"],
-        extra_cols="season, round",
-        extra_vals=f"{season}, {round_num}",
-        source_label=f"jolpica/{season}/{round_num}/standings",
-    )
+    _load_array_to_raw(data, "driver_standings", season, round_num)
+
+    data = fetch_laps(season, round_num)
+    _load_array_to_raw(data, "jolpica_laps", season, round_num)
+
+    data = fetch_pit_stops(season, round_num)
+    _load_array_to_raw(data, "jolpica_pit_stops", season, round_num)
+
+    # Schedule: loaded once per season (round_num=0 key)
+    races = fetch_schedule(season)
+    _load_array_to_raw(races, "schedule", season, round_num=0)
+
+    logger.info(f"Done — {season} R{round_num}")
 
 
-# ─── OpenF1: fetch sessions, then laps/stints/pits ───────────────────────────
+# ─── Detect round or resolve backfill range ───────────────────────────────────
 
-def ingest_openf1_data(**context):
-    """Fetch sessions + laps + stints + pits for the target round, load directly to Snowflake."""
-    season = int(context["params"]["season"])
-    round_num = int(context["params"]["round"])
+def detect_or_resolve_rounds(**context):
+    """Determine which rounds to ingest.
 
-    sessions = fetch_race_sessions(season)
-    if round_num > len(sessions):
-        logger.warning(f"Round {round_num} not found in OpenF1 sessions for {season}")
-        return
+    Scheduled runs: auto-detect latest round from the race calendar.
+    Manual backfill: use params (season, start_round, end_round).
 
-    session = sessions[round_num - 1]
-    session_key = session["session_key"]
-    logger.info(f"OpenF1 session_key={session_key} for {season} round {round_num}")
+    Pushes a list of (season, round) tuples to XCom.
+    Returns True if there's work to do (ShortCircuitOperator).
+    """
+    params = context.get("params", {})
+    mode = params.get("mode", "latest")
 
-    # Load session metadata
-    _load_records_to_raw(
-        records=[session],
-        table_name="sessions",
-        season=season,
-        round_num=round_num,
-        unique_keys=["session_key"],
-        extra_cols="session_key, season, round",
-        extra_vals=f"PARSE_JSON(json_str):session_key::INTEGER, {season}, {round_num}",
-        source_label=f"openf1/{season}/{round_num}/sessions",
-    )
+    if mode == "backfill":
+        season = int(params["season"])
+        start_round = int(params["start_round"])
+        end_round = int(params["end_round"])
+        rounds = [(season, r) for r in range(start_round, end_round + 1)]
+        logger.info(f"Backfill mode: {season} R{start_round}–R{end_round} ({len(rounds)} rounds)")
+        context["ti"].xcom_push(key="rounds", value=rounds)
+        return True
 
-    # Fetch and load laps
-    laps = fetch_laps(session_key)
-    _load_records_to_raw(
-        records=laps,
-        table_name="laps",
-        season=season,
-        round_num=round_num,
-        unique_keys=["session_key", "driver_number", "lap_number"],
-        extra_cols="session_key, driver_number, lap_number",
-        extra_vals=(
-            "PARSE_JSON(json_str):session_key::INTEGER, "
-            "PARSE_JSON(json_str):driver_number::INTEGER, "
-            "PARSE_JSON(json_str):lap_number::INTEGER"
-        ),
-        source_label=f"openf1/{season}/{round_num}/laps",
-    )
+    # Auto-detect: find the latest round whose weekend has started
+    today = datetime.utcnow().date()
+    season = today.year
 
-    # Fetch and load stints
-    stints = fetch_stints(session_key)
-    _load_records_to_raw(
-        records=stints,
-        table_name="stints",
-        season=season,
-        round_num=round_num,
-        unique_keys=["session_key", "driver_number", "stint_number"],
-        extra_cols="session_key, driver_number, stint_number",
-        extra_vals=(
-            "PARSE_JSON(json_str):session_key::INTEGER, "
-            "PARSE_JSON(json_str):driver_number::INTEGER, "
-            "PARSE_JSON(json_str):stint_number::INTEGER"
-        ),
-        source_label=f"openf1/{season}/{round_num}/stints",
-    )
+    races = fetch_schedule(season)
+    if not races:
+        logger.info(f"No races found for {season}")
+        return False
 
-    # Fetch and load pit stops
-    pits = fetch_pit_stops(session_key)
-    _load_records_to_raw(
-        records=pits,
-        table_name="pit_stops",
-        season=season,
-        round_num=round_num,
-        unique_keys=["session_key", "driver_number", "lap_number"],
-        extra_cols="session_key, driver_number, lap_number",
-        extra_vals=(
-            "PARSE_JSON(json_str):session_key::INTEGER, "
-            "PARSE_JSON(json_str):driver_number::INTEGER, "
-            "PARSE_JSON(json_str):lap_number::INTEGER"
-        ),
-        source_label=f"openf1/{season}/{round_num}/pit_stops",
-    )
+    target_round = None
+    for race in races:
+        race_date = datetime.strptime(race["date"], "%Y-%m-%d").date()
+        # Race weekend starts ~2 days before race day (Friday practice)
+        weekend_start = race_date - timedelta(days=2)
+        if weekend_start <= today:
+            target_round = int(race["round"])
+
+    if target_round is None:
+        logger.info("No race weekend in progress — skipping")
+        return False
+
+    logger.info(f"Detected current round: {season} R{target_round}")
+    context["ti"].xcom_push(key="rounds", value=[(season, target_round)])
+    return True
+
+
+# ─── Main ingestion task ──────────────────────────────────────────────────────
+
+def ingest_rounds(**context):
+    """Ingest all rounds from XCom (single round for scheduled, multiple for backfill).
+
+    Runs sequentially with 2s delay between rounds to avoid Jolpica 429 rate limits.
+    """
+    rounds = context["ti"].xcom_pull(task_ids="detect_rounds", key="rounds")
+    total = len(rounds)
+
+    for i, (season, round_num) in enumerate(rounds, 1):
+        logger.info(f"[{i}/{total}] Ingesting {season} R{round_num}")
+        _ingest_single_round(season, round_num)
+
+        if i < total:
+            logger.info("Waiting 2s before next round (rate limit)...")
+            time.sleep(2)
+
+    logger.info(f"Ingestion complete — {total} round(s) loaded")
 
 
 # ─── dbt run ─────────────────────────────────────────────────────────────────
 
 def run_dbt(**context):
-    """Run dbt from the dbt/ directory."""
+    """Run dbt deps + run + test from the mounted dbt/ directory."""
     import subprocess
-    dbt_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "dbt")
-    result = subprocess.run(
+
+    dbt_dir = "/opt/airflow/dbt"
+
+    # Install dbt packages (e.g. dbt_utils) if not already present
+    deps_result = subprocess.run(
+        ["dbt", "deps", "--profiles-dir", dbt_dir, "--project-dir", dbt_dir],
+        capture_output=True, text=True,
+    )
+    logger.info(deps_result.stdout)
+    if deps_result.returncode != 0:
+        logger.error(deps_result.stderr)
+        raise RuntimeError(f"dbt deps failed: {deps_result.stderr}")
+
+    # Run models
+    run_result = subprocess.run(
         ["dbt", "run", "--profiles-dir", dbt_dir, "--project-dir", dbt_dir],
         capture_output=True, text=True,
     )
-    logger.info(result.stdout)
-    if result.returncode != 0:
-        logger.error(result.stderr)
-        raise RuntimeError(f"dbt run failed: {result.stderr}")
+    logger.info(run_result.stdout)
+    if run_result.returncode != 0:
+        logger.error(run_result.stderr)
+        raise RuntimeError(f"dbt run failed: {run_result.stderr}")
+
+    # Run tests
+    test_result = subprocess.run(
+        ["dbt", "test", "--profiles-dir", dbt_dir, "--project-dir", dbt_dir],
+        capture_output=True, text=True,
+    )
+    logger.info(test_result.stdout)
+    if test_result.returncode != 0:
+        logger.error(test_result.stderr)
+        raise RuntimeError(f"dbt test failed: {test_result.stderr}")
 
 
 # ─── Trigger Evidence rebuild ─────────────────────────────────────────────────
@@ -274,30 +254,41 @@ def trigger_evidence_build(**context):
 with DAG(
     dag_id="f1_rivalry_pipeline",
     default_args=default_args,
-    description="F1 API → Snowflake → dbt → Evidence rebuild",
-    schedule="0 6 * * 1",  # Weekly on Monday 6am UTC during season
+    description="Jolpica API → Snowflake → dbt → Evidence (auto-detect or backfill)",
+    schedule="0 2 * * 0,1",  # Sunday + Monday 2am UTC (post-Saturday, post-Sunday)
     start_date=datetime(2024, 1, 1),
     catchup=False,
     params={
-        "season": Param(default="2024", type="string", description="F1 season year"),
-        "round": Param(default="1", type="string", description="Round number"),
+        "mode": Param(
+            default="latest",
+            type="string",
+            enum=["latest", "backfill"],
+            description="latest = auto-detect current round, backfill = load a range",
+        ),
+        "season": Param(default="2026", type="string", description="Season year (backfill mode)"),
+        "start_round": Param(default="1", type="string", description="First round to load (backfill mode)"),
+        "end_round": Param(default="2", type="string", description="Last round to load (backfill mode)"),
     },
     tags=["f1", "rivalry"],
 ) as dag:
 
-    # Jolpica: fetch + load (parallel)
-    t_qualifying = PythonOperator(task_id="ingest_qualifying", python_callable=ingest_qualifying)
-    t_results = PythonOperator(task_id="ingest_results", python_callable=ingest_results)
-    t_standings = PythonOperator(task_id="ingest_standings", python_callable=ingest_standings)
+    # Step 1: detect current round or resolve backfill range
+    t_detect = ShortCircuitOperator(
+        task_id="detect_rounds",
+        python_callable=detect_or_resolve_rounds,
+    )
 
-    # OpenF1: fetch + load (all in one task — sessions first, then laps/stints/pits)
-    t_openf1 = PythonOperator(task_id="ingest_openf1", python_callable=ingest_openf1_data)
+    # Step 2: ingest all rounds (sequential with rate limiting)
+    t_ingest = PythonOperator(
+        task_id="ingest_rounds",
+        python_callable=ingest_rounds,
+    )
 
-    # dbt
+    # Step 3: dbt transformations
     t_dbt = PythonOperator(task_id="dbt_run", python_callable=run_dbt)
 
-    # Evidence rebuild
+    # Step 4: trigger Evidence dashboard rebuild
     t_evidence = PythonOperator(task_id="trigger_evidence_build", python_callable=trigger_evidence_build)
 
-    # Dependencies: all ingestion → dbt → Evidence
-    [t_qualifying, t_results, t_standings, t_openf1] >> t_dbt >> t_evidence
+    # Dependencies: linear pipeline
+    t_detect >> t_ingest >> t_dbt >> t_evidence
