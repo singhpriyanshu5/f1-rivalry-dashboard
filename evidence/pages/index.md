@@ -216,7 +216,7 @@ order by round, driver_order
     name=season
     data={seasons}
     value=season
-    defaultValue={2024}
+    defaultValue={2026}
     title="Season"
 />
 
