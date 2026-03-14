@@ -178,6 +178,7 @@ npm run build        # Static output in evidence/build/
 |--------|--------|--------|
 | 2024 | 1–24 | Fully loaded |
 | 2025 | 1–24 | Fully loaded |
+| 2026 | 1–2 | In progress (via Airflow DAG) |
 
 ## dbt Model Lineage
 

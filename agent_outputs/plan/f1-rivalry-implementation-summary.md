@@ -1,7 +1,7 @@
 # F1 Rivalry Dashboard — Implementation Summary
 
 **Date:** 2026-03-14
-**Status:** Full 2024 + 2025 seasons loaded (48 rounds total). Dashboard fully working with premium dark telemetry UI, race battle visualization upgrade (3 insight charts), driver pairing selector for mid-season swaps, cascading dropdown fix, total race time gap chart, driver name legend, tooltip value-desc sorting, series color consistency via `seriesColors`, chart chronological ordering fix. dbt 14 models + 19 tests pass. Evidence build succeeds. `patch-package` preserves node_modules patches for deployment. **Deployed to GitHub Pages** at `https://singhpriyanshu5.github.io/f1-rivalry-dashboard/`.
+**Status:** Full 2024 + 2025 seasons loaded (48 rounds) + 2026 R1-R2 via Airflow (50 rounds total). Dashboard fully working with premium dark telemetry UI, race battle visualization upgrade (3 insight charts), driver pairing selector for mid-season swaps, cascading dropdown fix, total race time gap chart, driver name legend, tooltip value-desc sorting, series color consistency via `seriesColors`, chart chronological ordering fix. dbt 14 models + 19 tests pass. Evidence build succeeds. `patch-package` preserves node_modules patches for deployment. **Deployed to GitHub Pages** at `https://singhpriyanshu5.github.io/f1-rivalry-dashboard/`.
 
 ---
 
@@ -44,6 +44,7 @@
 **Data loaded:**
 - 2024 Rounds 1–24: **all loaded** (all 5 tables per round)
 - 2025 Rounds 1–24: **all loaded** (all 5 tables per round) — ingested 2026-03-14
+- 2026 Rounds 1–2: **loaded** via Airflow DAG (R1 backfill + R2 scheduled run)
 - Initial parallel run hit Jolpica 429 rate limits; retried failed rounds sequentially — all succeeded
 - **Important:** Parallel ingestion hits Jolpica 429 rate limits — must run rounds sequentially with 2s delay between rounds
 
