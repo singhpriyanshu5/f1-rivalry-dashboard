@@ -121,7 +121,24 @@ python scripts/ingest_season.py 2024
 
 > **Note:** Jolpica rate-limits at ~30 req/min. The season script handles this with 2s delays between rounds.
 
-### 4. Run dbt
+### 4. Run Airflow (Orchestration)
+
+```bash
+cd airflow
+docker compose up -d
+# Airflow UI at localhost:8081 (admin/admin)
+```
+
+The `f1_pipeline_dag` runs on a schedule (`0 2 * * 0,1` — Sunday + Monday 2am UTC) and auto-detects the current season and latest round. It short-circuits on non-race weekends to avoid wasted API calls.
+
+**Backfill mode:** Trigger manually via Airflow UI with params:
+```json
+{"mode": "backfill", "season": 2024, "start_round": 1, "end_round": 24}
+```
+
+Pipeline: `detect_rounds → ingest_rounds → dbt_run → trigger_evidence_build`
+
+### 5. Run dbt
 
 ```bash
 cd dbt
@@ -131,7 +148,7 @@ dbt run         # Build 14 models
 dbt test        # Run 19 tests
 ```
 
-### 5. Run Evidence Dashboard (local)
+### 6. Run Evidence Dashboard (local)
 
 ```bash
 cd evidence
@@ -140,7 +157,7 @@ npm run sources      # Fetch data from Snowflake
 npm run dev          # Dev server at localhost:3000
 ```
 
-### 6. Build & Deploy
+### 7. Build & Deploy
 
 Pushing to `main` triggers the GitHub Actions workflow which builds Evidence and deploys to GitHub Pages.
 
