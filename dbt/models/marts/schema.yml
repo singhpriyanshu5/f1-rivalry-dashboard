@@ -1,0 +1,36 @@
+version: 2
+
+models:
+  - name: mart_qualifying_h2h
+    description: Qualifying head-to-head between teammates per round
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: constructor_id
+        tests:
+          - not_null
+
+  - name: mart_race_h2h
+    description: Race head-to-head between teammates with DNF categories
+    columns:
+      - name: season
+        tests:
+          - not_null
+
+  - name: mart_points_trajectory
+    description: Cumulative points per driver per round
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+
+  - name: mart_lap_pace
+    description: Teammate lap pace data filtered for safety car laps
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: driver_id
+        tests:
+          - not_null

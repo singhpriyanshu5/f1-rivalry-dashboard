@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_qualifying
+    description: Flattened qualifying results with lap times parsed to milliseconds
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: round
+        tests:
+          - not_null
+
+  - name: stg_results
+    description: Flattened race results with grid/finish positions and points
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+
+  - name: stg_driver_standings
+    description: Cumulative driver standings per round
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+
+  - name: stg_laps
+    description: Lap timing data from Jolpica with times parsed to seconds
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+      - name: lap_number
+        tests:
+          - not_null
+
+  - name: stg_pit_stops
+    description: Pit stop data from Jolpica with durations in seconds

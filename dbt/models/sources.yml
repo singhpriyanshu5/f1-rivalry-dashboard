@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: raw
+    database: F1_ANALYTICS
+    schema: RAW
+    tables:
+      - name: raw_qualifying
+      - name: raw_results
+      - name: raw_driver_standings
+      - name: raw_jolpica_laps
+      - name: raw_jolpica_pit_stops

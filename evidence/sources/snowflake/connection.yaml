@@ -1,0 +1,10 @@
+name: snowflake
+type: snowflake
+options:
+  account: ${EVIDENCE_SOURCE__snowflake__account}
+  username: ${EVIDENCE_SOURCE__snowflake__username}
+  password: ${EVIDENCE_SOURCE__snowflake__password}
+  database: F1_ANALYTICS
+  schema: RAW_ANALYTICS
+  warehouse: COMPUTE_WH
+  role: ACCOUNTADMIN

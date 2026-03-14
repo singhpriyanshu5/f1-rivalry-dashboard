@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: dim_drivers
+    description: Distinct driver dimension from qualifying data
+    columns:
+      - name: driver_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_constructors
+    description: Distinct constructor dimension
+    columns:
+      - name: constructor_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_dnf_status
+    description: Maps race status strings to DNF categories (mechanical, crash, finished, other)
+    columns:
+      - name: status
+        tests:
+          - unique
+          - not_null

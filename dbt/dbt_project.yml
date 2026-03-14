@@ -1,0 +1,24 @@
+name: f1_rivalry
+version: "1.0.0"
+
+profile: f1_rivalry
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+clean-targets:
+  - target
+  - dbt_packages
+
+models:
+  f1_rivalry:
+    staging:
+      +schema: STAGING
+      +materialized: view
+    dimensions:
+      +schema: STAGING
+      +materialized: table
+    marts:
+      +schema: ANALYTICS
+      +materialized: table

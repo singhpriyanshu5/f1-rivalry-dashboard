@@ -1,0 +1,40 @@
+basePath: /f1-rivalry-dashboard
+
+appearance:
+  default: dark
+  switcher: false
+
+theme:
+  colors:
+    primary:
+      dark: '#E10600'
+    accent:
+      dark: '#00D2BE'
+    base-100:
+      dark: '#0b0b12'
+    info:
+      dark: '#3671C6'
+    positive:
+      dark: '#229971'
+    warning:
+      dark: '#FF8000'
+    negative:
+      dark: '#E10600'
+  colorPalettes:
+    default:
+      - '#E10600'
+      - '#00D2BE'
+      - '#3671C6'
+      - '#FF8000'
+      - '#229971'
+      - '#6692FF'
+      - '#F91536'
+      - '#37BEDD'
+      - '#C8C428'
+      - '#B6BABD'
+
+plugins:
+  components:
+    "@evidence-dev/core-components": {}
+  datasources:
+    "@evidence-dev/snowflake": {}

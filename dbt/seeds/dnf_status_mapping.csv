@@ -1,0 +1,99 @@
+status,category
+Finished,finished
++1 Lap,finished
++2 Laps,finished
++3 Laps,finished
++4 Laps,finished
++5 Laps,finished
++6 Laps,finished
++7 Laps,finished
++8 Laps,finished
++9 Laps,finished
++10 Laps,finished
++11 Laps,finished
++12 Laps,finished
+Accident,crash
+Collision,crash
+Spun off,crash
+Collision damage,crash
+Damage,crash
+Accident damage,crash
+Puncture,crash
+Tyre puncture,crash
+Retired,other
+Disqualified,other
+Excluded,other
+Not classified,other
+Withdrew,other
+Did not qualify,other
+Did not prequalify,other
+107% Rule,other
+DNS,other
+Engine,mechanical
+Gearbox,mechanical
+Transmission,mechanical
+Hydraulics,mechanical
+Electrical,mechanical
+Radiator,mechanical
+Suspension,mechanical
+Brakes,mechanical
+Differential,mechanical
+Overheating,mechanical
+Mechanical,mechanical
+Tyre,mechanical
+Driver Seat,mechanical
+Wheel,mechanical
+Throttle,mechanical
+Steering,mechanical
+Technical,mechanical
+Electronics,mechanical
+Broken wing,mechanical
+Heat shield fire,mechanical
+Exhaust,mechanical
+Oil leak,mechanical
+Water leak,mechanical
+Fuel pressure,mechanical
+Oil pressure,mechanical
+Engine fire,mechanical
+Fire,mechanical
+Wheel nut,mechanical
+Wheel rim,mechanical
+Water pressure,mechanical
+Clutch,mechanical
+Power Unit,mechanical
+ERS,mechanical
+Turbo,mechanical
+Power loss,mechanical
+Driveshaft,mechanical
+Fuel system,mechanical
+Battery,mechanical
+Front wing,mechanical
+Rear wing,mechanical
+Floor,mechanical
+Undertray,mechanical
+Cooling,mechanical
+Vibrations,mechanical
+Oil line,mechanical
+Fuel leak,mechanical
+Alternator,mechanical
+Fuel pump,mechanical
+Track rod,mechanical
+Engine misfire,mechanical
+Oil pump,mechanical
+Water pump,mechanical
+Halfshaft,mechanical
+Crankshaft,mechanical
+Drivetrain,mechanical
+Spark plugs,mechanical
+Fuel rig,mechanical
+Safety concerns,other
+Debris,crash
+Out of fuel,mechanical
+Ill,other
+Injury,other
+Eye injury,other
+Fatal accident,crash
+Seat,mechanical
+Physical,other
+Missing weight,other
+Race start,other
