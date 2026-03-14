@@ -1,4 +1,5 @@
-basePath: /f1-rivalry-dashboard
+deployment:
+  basePath: /f1-rivalry-dashboard
 
 appearance:
   default: dark
