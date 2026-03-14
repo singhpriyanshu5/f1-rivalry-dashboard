@@ -36,9 +36,9 @@ jobs:
       - name: Build Evidence site
         working-directory: evidence
         env:
-          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
-          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-          SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+          EVIDENCE_SOURCE__snowflake__account: ${{ secrets.EVIDENCE_SOURCE__snowflake__account }}
+          EVIDENCE_SOURCE__snowflake__username: ${{ secrets.EVIDENCE_SOURCE__snowflake__username }}
+          EVIDENCE_SOURCE__snowflake__password: ${{ secrets.EVIDENCE_SOURCE__snowflake__password }}
         run: |
           npm run sources
           npm run build
