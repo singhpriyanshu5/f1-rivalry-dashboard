@@ -65,7 +65,7 @@
 
     :global(h3) {
         font-size: 1.1rem !important;
-        color: #9090a8 !important;
+        color: #b0b0c4 !important;
         font-weight: 600 !important;
         letter-spacing: 0.05em !important;
     }
@@ -138,7 +138,7 @@
     :global(.f1-hero-sub) {
         font-family: 'Saira', sans-serif;
         font-size: 0.95rem;
-        color: #6b6b80;
+        color: #b8b8cc;
         font-weight: 400;
         max-width: 520px;
         margin: 0 auto;
@@ -252,7 +252,7 @@
     :global(.f1-section-subtitle) {
         font-family: 'Saira', sans-serif;
         font-size: 0.8rem;
-        color: #6b6b80;
+        color: #b8b8cc;
         margin: 0 0 1.25rem 0;
         font-weight: 400;
     }
@@ -291,7 +291,7 @@
         font-size: 0.75rem !important;
         letter-spacing: 0.1em !important;
         text-transform: uppercase !important;
-        color: #6b6b80 !important;
+        color: #b8b8cc !important;
     }
 
     :global(.f1-stat-card .text-xl) {
@@ -333,14 +333,14 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #6b6b80;
+        color: #b8b8cc;
         margin-bottom: 0.5rem;
     }
 
     :global(.f1-chart-note) {
         font-family: 'Saira', sans-serif;
         font-size: 0.7rem;
-        color: #6b6b80;
+        color: #b8b8cc;
         margin-top: 0.25rem;
         font-style: italic;
     }
@@ -465,7 +465,7 @@
         font-size: 0.72rem !important;
         letter-spacing: 0.1em !important;
         text-transform: uppercase !important;
-        color: #6b6b80 !important;
+        color: #b8b8cc !important;
         background: #0b0b12 !important;
         border-bottom: 2px solid #E10600 !important;
         padding: 0.6rem 0.75rem !important;
