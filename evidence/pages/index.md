@@ -4,7 +4,7 @@ hide_title: true
 ---
 
 ```sql seasons
-select distinct season from snowflake.mart_qualifying_h2h order by season
+select distinct season from snowflake.mart_qualifying_h2h order by season desc
 ```
 
 ```sql constructors
