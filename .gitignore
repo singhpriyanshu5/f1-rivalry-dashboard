@@ -13,6 +13,7 @@ venv/
 evidence/.evidence/
 evidence/build/
 evidence/node_modules/
+evidence/test-results/
 
 # Data files
 *.parquet
