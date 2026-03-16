@@ -29,3 +29,6 @@ airflow/plugins/
 dbt/target/
 dbt/dbt_packages/
 dbt/logs/
+
+# YouTube content
+agent_outputs/youtube-related/
