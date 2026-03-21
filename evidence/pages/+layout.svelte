@@ -237,6 +237,22 @@
         background: #FF8000;
     }
 
+    :global(.f1-section.green::before) {
+        background: #00C853;
+    }
+
+    :global(.f1-section.purple::before) {
+        background: #9C27B0;
+    }
+
+    :global(.f1-section.amber::before) {
+        background: #FF6F00;
+    }
+
+    :global(.f1-section.cyan::before) {
+        background: #00BCD4;
+    }
+
     /* ── Section header ── */
     :global(.f1-section-title) {
         font-family: 'Saira Condensed', sans-serif;
@@ -348,6 +364,96 @@
     :global(.f1-detail-table) {
         max-height: 320px;
         overflow-y: auto;
+    }
+
+    /* ── Season Scorecard ── */
+    :global(.f1-scorecard) {
+        background: #12121e;
+        border: 1px solid #1c1c2e;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    :global(.f1-scorecard-title) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-weight: 800;
+        font-size: 1.1rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6b6b80;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    :global(.f1-verdict-grid) {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    :global(.f1-verdict-card) {
+        flex: 1;
+        min-width: 130px;
+        max-width: 180px;
+        background: #0b0b12;
+        border: 1px solid #1c1c2e;
+        border-radius: 4px;
+        padding: 1rem;
+        text-align: center;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    :global(.f1-verdict-card.winner-d1) {
+        border-color: rgba(225, 6, 0, 0.4);
+        box-shadow: 0 0 16px rgba(225, 6, 0, 0.08);
+    }
+
+    :global(.f1-verdict-card.winner-d2) {
+        border-color: rgba(0, 210, 190, 0.4);
+        box-shadow: 0 0 16px rgba(0, 210, 190, 0.08);
+    }
+
+    :global(.f1-verdict-card.winner-tie) {
+        border-color: #2a2a40;
+    }
+
+    :global(.f1-verdict-label) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #6b6b80;
+        margin-bottom: 0.4rem;
+    }
+
+    :global(.f1-verdict-winner) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        line-height: 1.2;
+    }
+
+    :global(.winner-d1 .f1-verdict-winner) {
+        color: #E10600;
+    }
+
+    :global(.winner-d2 .f1-verdict-winner) {
+        color: #00D2BE;
+    }
+
+    :global(.winner-tie .f1-verdict-winner) {
+        color: #6b6b80;
+    }
+
+    :global(.f1-verdict-detail) {
+        font-family: 'Saira', sans-serif;
+        font-size: 0.72rem;
+        color: #b8b8cc;
+        margin-top: 0.25rem;
     }
 
     /* ── Horizontal rules / dividers ── */
@@ -514,6 +620,115 @@
         margin-bottom: 1rem;
     }
 
+    /* ── Section Navigation ── */
+    :global(.f1-section-nav) {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        background: #12121e;
+        border: 1px solid #1c1c2e;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        position: sticky;
+        top: 6px;
+        z-index: 100;
+        backdrop-filter: blur(12px);
+        background: rgba(18, 18, 30, 0.92);
+    }
+
+    :global(.f1-nav-pill) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-decoration: none;
+        padding: 0.3rem 0.7rem;
+        border-radius: 3px;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    :global(.f1-nav-pill.red) {
+        color: #E10600;
+        background: rgba(225, 6, 0, 0.08);
+    }
+    :global(.f1-nav-pill.red:hover) {
+        background: rgba(225, 6, 0, 0.2);
+        border-color: rgba(225, 6, 0, 0.3);
+    }
+
+    :global(.f1-nav-pill.teal) {
+        color: #00D2BE;
+        background: rgba(0, 210, 190, 0.08);
+    }
+    :global(.f1-nav-pill.teal:hover) {
+        background: rgba(0, 210, 190, 0.2);
+        border-color: rgba(0, 210, 190, 0.3);
+    }
+
+    :global(.f1-nav-pill.blue) {
+        color: #3671C6;
+        background: rgba(54, 113, 198, 0.08);
+    }
+    :global(.f1-nav-pill.blue:hover) {
+        background: rgba(54, 113, 198, 0.2);
+        border-color: rgba(54, 113, 198, 0.3);
+    }
+
+    :global(.f1-nav-pill.green) {
+        color: #00C853;
+        background: rgba(0, 200, 83, 0.08);
+    }
+    :global(.f1-nav-pill.green:hover) {
+        background: rgba(0, 200, 83, 0.2);
+        border-color: rgba(0, 200, 83, 0.3);
+    }
+
+    :global(.f1-nav-pill.purple) {
+        color: #9C27B0;
+        background: rgba(156, 39, 176, 0.08);
+    }
+    :global(.f1-nav-pill.purple:hover) {
+        background: rgba(156, 39, 176, 0.2);
+        border-color: rgba(156, 39, 176, 0.3);
+    }
+
+    :global(.f1-nav-pill.amber) {
+        color: #FF6F00;
+        background: rgba(255, 111, 0, 0.08);
+    }
+    :global(.f1-nav-pill.amber:hover) {
+        background: rgba(255, 111, 0, 0.2);
+        border-color: rgba(255, 111, 0, 0.3);
+    }
+
+    :global(.f1-nav-pill.cyan) {
+        color: #00BCD4;
+        background: rgba(0, 188, 212, 0.08);
+    }
+    :global(.f1-nav-pill.cyan:hover) {
+        background: rgba(0, 188, 212, 0.2);
+        border-color: rgba(0, 188, 212, 0.3);
+    }
+
+    :global(.f1-nav-pill.orange) {
+        color: #FF8000;
+        background: rgba(255, 128, 0, 0.08);
+    }
+    :global(.f1-nav-pill.orange:hover) {
+        background: rgba(255, 128, 0, 0.2);
+        border-color: rgba(255, 128, 0, 0.3);
+    }
+
+    /* Smooth scroll for anchor links */
+    :global(html) {
+        scroll-behavior: smooth;
+        scroll-padding-top: 60px;
+    }
+
     /* ── Fade-in animation ── */
     :global(.f1-section) {
         animation: f1FadeUp 0.5s ease-out both;
@@ -523,6 +738,11 @@
     :global(.f1-section:nth-child(3)) { animation-delay: 0.16s; }
     :global(.f1-section:nth-child(4)) { animation-delay: 0.24s; }
     :global(.f1-section:nth-child(5)) { animation-delay: 0.32s; }
+    :global(.f1-section:nth-child(6)) { animation-delay: 0.40s; }
+    :global(.f1-section:nth-child(7)) { animation-delay: 0.48s; }
+    :global(.f1-section:nth-child(8)) { animation-delay: 0.56s; }
+    :global(.f1-section:nth-child(9)) { animation-delay: 0.64s; }
+    :global(.f1-section:nth-child(10)) { animation-delay: 0.72s; }
 
     @keyframes -global-f1FadeUp {
         from {

@@ -34,3 +34,33 @@ models:
       - name: driver_id
         tests:
           - not_null
+
+  - name: mart_pit_stop_h2h
+    description: Pit stop head-to-head between teammates - strategy and duration comparison
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: constructor_id
+        tests:
+          - not_null
+
+  - name: mart_lap_pace_summary
+    description: Lap pace consistency summary - median, stddev, P25/P75 per driver per round
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: driver_id
+        tests:
+          - not_null
+
+  - name: mart_season_summary
+    description: Season summary scorecard - one row per pairing with all H2H verdicts
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: constructor_id
+        tests:
+          - not_null

@@ -12,10 +12,16 @@ An end-to-end data engineering project that visualizes Formula 1 teammate rivalr
 
 ## Features
 
+- **Season Verdict Scorecard** — At-a-glance summary: 5 color-coded verdict cards (Qualifying, Race H2H, Points, Reliability, Pit Stops) with winner highlighted
 - **Qualifying Battle** — Head-to-head qualifying wins and average gap (ms) per round
 - **Race Battle** — Points swing, position gap scatter, cumulative H2H wins, and detailed race results
 - **Points Trajectory** — Season-long cumulative points for selected teammates
+- **Grid vs Finish — Places Gained** — Avg places gained, best recovery, grouped bar chart and cumulative line chart
+- **Pit Stop Strategy Battle** — Avg pit duration, who gets pitted first, duration bar chart and pit lap timing scatter
+- **DNF & Reliability Tracker** — Reliability %, mechanical DNFs, stacked bar chart by category, and DNF log table
+- **Lap Pace Consistency** — IQR-based consistency score (0–100), pace window bar chart, and consistency trend line
 - **Lap Pace Comparison** — Lap-by-lap overlay and total race time gap per round
+- **Section Navigation** — Sticky color-coded pill bar for quick jumping between all 8 dashboard sections
 - **Mid-Season Driver Swaps** — Cascading dropdowns let you select specific driver pairings (e.g. 2025 Red Bull: LAW vs VER for R01-R02, VER vs TSU for R03-R24)
 - **Dark Telemetry UI** — Motorsport-inspired theme with Saira fonts, F1 team colors, and card-based layout
 
@@ -26,7 +32,7 @@ An end-to-end data engineering project that visualizes Formula 1 teammate rivalr
 | **Data Source** | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) (qualifying, results, standings, laps, pit stops, schedule) |
 | **Orchestration** | Apache Airflow (Dockerized, LocalExecutor) |
 | **Warehouse** | Snowflake (3 schema layers: RAW → STAGING → ANALYTICS) |
-| **Transformation** | dbt Core (14 models, 19 tests) |
+| **Transformation** | dbt Core (17 models, 25 tests) |
 | **Dashboard** | [Evidence.dev](https://evidence.dev) (static site, Markdown + SQL) |
 | **CI/CD** | GitHub Actions → GitHub Pages |
 
@@ -61,7 +67,7 @@ f1-rivalry-dashboard/
 │   ├── models/
 │   │   ├── staging/          # stg_qualifying, stg_results, stg_laps, etc.
 │   │   ├── dimensions/       # dim_drivers, dim_constructors, dim_races, dim_dnf_status
-│   │   └── marts/            # mart_qualifying_h2h, mart_race_h2h, mart_points_trajectory, mart_lap_pace
+│   │   └── marts/            # mart_qualifying_h2h, mart_race_h2h, mart_points_trajectory, mart_lap_pace, mart_pit_stop_h2h, mart_season_summary, mart_lap_pace_summary
 │   ├── seeds/                # dnf_status_mapping.csv
 │   └── dbt_project.yml
 ├── evidence/                 # Evidence.dev dashboard
@@ -144,8 +150,8 @@ Pipeline: `detect_rounds → ingest_rounds → dbt_run → trigger_evidence_buil
 cd dbt
 dbt deps
 dbt seed        # Load dnf_status_mapping.csv
-dbt run         # Build 14 models
-dbt test        # Run 19 tests
+dbt run         # Build 17 models
+dbt test        # Run 25 tests
 ```
 
 ### 6. Run Evidence Dashboard (local)
@@ -183,11 +189,11 @@ npm run build        # Static output in evidence/build/
 ## dbt Model Lineage
 
 ```
-RAW_QUALIFYING ──→ stg_qualifying ──→ mart_qualifying_h2h
-RAW_RESULTS ────→ stg_results ─────→ mart_race_h2h
+RAW_QUALIFYING ──→ stg_qualifying ──→ mart_qualifying_h2h ──→ mart_season_summary
+RAW_RESULTS ────→ stg_results ─────→ mart_race_h2h ─────────→ mart_season_summary
 RAW_DRIVER_STANDINGS → stg_driver_standings → mart_points_trajectory
-RAW_JOLPICA_LAPS ──→ stg_laps ────→ mart_lap_pace
-RAW_JOLPICA_PIT_STOPS → stg_pit_stops
+RAW_JOLPICA_LAPS ──→ stg_laps ────→ mart_lap_pace ──→ mart_lap_pace_summary
+RAW_JOLPICA_PIT_STOPS → stg_pit_stops → mart_pit_stop_h2h ──→ mart_season_summary
 RAW_SCHEDULE ───→ stg_schedule ──→ dim_races ──→ (all marts)
                                     dim_drivers
                                     dim_constructors
