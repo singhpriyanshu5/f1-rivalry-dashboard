@@ -520,6 +520,7 @@
         background: #12121e !important;
         border: 1px solid #2a2a40 !important;
         color: #c8c8d4 !important;
+        z-index: 200 !important;
     }
 
     :global([data-popover-content] button),
