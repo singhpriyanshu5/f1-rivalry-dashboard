@@ -19,6 +19,8 @@ x-airflow-common: &airflow-common
     SNOWFLAKE_DATABASE: ${SNOWFLAKE_DATABASE:-F1_ANALYTICS}
     # GitHub
     GITHUB_PAT: ${GITHUB_PAT:-}
+    # Anthropic (LLM narratives)
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs

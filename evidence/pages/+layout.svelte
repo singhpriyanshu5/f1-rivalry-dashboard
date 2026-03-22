@@ -135,6 +135,16 @@
         color: #E10600;
     }
 
+    :global(.f1-hero-subtitle) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        letter-spacing: 0.25em;
+        text-transform: uppercase;
+        color: #b8b8cc;
+        margin-bottom: 0.6rem;
+    }
+
     :global(.f1-hero-sub) {
         font-family: 'Saira', sans-serif;
         font-size: 0.95rem;
@@ -201,6 +211,97 @@
         font-size: 0.85rem;
         text-transform: uppercase;
         margin: 0 0.3rem;
+    }
+
+    /* ── AI Season Story narrative card ── */
+    :global(.f1-narrative-card) {
+        background: linear-gradient(135deg, #12121e 0%, #1a1a2e 100%);
+        border: 1px solid #2a2a40;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin: 1rem 0 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    :global(.f1-narrative-card::before) {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #E10600, #00D2BE);
+    }
+
+    :global(.f1-narrative-badge) {
+        display: inline-block;
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: #00D2BE;
+        background: rgba(0, 210, 190, 0.1);
+        border: 1px solid rgba(0, 210, 190, 0.25);
+        padding: 0.2rem 0.7rem;
+        border-radius: 2px;
+        margin-bottom: 0.75rem;
+    }
+
+    :global(.f1-narrative-text) {
+        font-family: 'Saira', sans-serif;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        color: #d0d0dc;
+    }
+
+    :global(.f1-narrative-hook) {
+        font-size: 0.95rem;
+        font-style: italic;
+        font-weight: 500;
+        color: #e8e8f0;
+        margin: 0 0 0.75rem 0;
+        padding-bottom: 0.6rem;
+        border-bottom: 1px solid #2a2a40;
+    }
+
+    :global(.f1-narrative-bullets) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    :global(.f1-narrative-item) {
+        display: flex;
+        gap: 0.6rem;
+        align-items: baseline;
+        font-size: 0.82rem;
+        color: #c0c0d0;
+        line-height: 1.5;
+    }
+
+    :global(.f1-narrative-label) {
+        font-family: 'Saira Condensed', sans-serif;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #00D2BE;
+        background: rgba(0, 210, 190, 0.08);
+        border: 1px solid rgba(0, 210, 190, 0.15);
+        padding: 0.15rem 0.5rem;
+        border-radius: 2px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    :global(.f1-narrative-meta) {
+        font-family: 'Saira', sans-serif;
+        font-size: 0.65rem;
+        color: #6b6b80;
+        margin-top: 0.75rem;
+        letter-spacing: 0.02em;
     }
 
     /* ── Section container ── */
@@ -760,6 +861,9 @@
     @media (max-width: 640px) {
         :global(.f1-hero-title) {
             font-size: 2.2rem;
+        }
+        :global(.f1-hero-subtitle) {
+            font-size: 1rem;
         }
         :global(.f1-controls) {
             flex-direction: column;
