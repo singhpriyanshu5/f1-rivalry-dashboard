@@ -11,3 +11,4 @@ sources:
       - name: raw_jolpica_laps
       - name: raw_jolpica_pit_stops
       - name: raw_schedule
+      - name: raw_season_narratives

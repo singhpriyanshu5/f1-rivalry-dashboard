@@ -218,8 +218,9 @@ order by round, driver_order
 ```
 
 <div class="f1-hero">
-    <div class="f1-hero-badge">Formula 1 Analytics</div>
-    <div class="f1-hero-title">TEAMMATE <span>RIVALRY</span></div>
+    <div class="f1-hero-badge">Analytics Dashboard</div>
+    <div class="f1-hero-title">FORMULA <span>1</span></div>
+    <div class="f1-hero-subtitle">TEAMMATE RIVALRY</div>
     <div class="f1-hero-sub">The only fair comparison in F1 — same car, same strategy options, same machinery. Select a season and constructor to compare teammates head-to-head.</div>
 </div>
 
@@ -257,6 +258,25 @@ order by round, driver_order
     <span class="f1-driver-vs">vs</span>
     <span class="f1-driver-chip teal">{race_filtered[0].driver_2_code}</span> <span class="f1-driver-fullname">{race_filtered[0].driver_2_name}</span>
 </div>
+
+```sql narrative
+select narrative_text, model_id, generated_at
+from snowflake.mart_season_narrative
+where season = ${inputs.season.value}
+  and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+limit 1
+```
+
+{#if narrative.length > 0}
+
+<div class="f1-narrative-card">
+    <div class="f1-narrative-badge">AI Season Story</div>
+    <div class="f1-narrative-text">{@html narrative[0].narrative_text}</div>
+    <div class="f1-narrative-meta">Based on {race_filtered.length} rounds of {inputs.season.value} season data · Powered by {narrative[0].model_id}</div>
+</div>
+
+{/if}
 
 <nav class="f1-section-nav">
     <a href="#section-qualifying" class="f1-nav-pill red">Quali</a>

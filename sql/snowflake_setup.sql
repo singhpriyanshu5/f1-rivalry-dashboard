@@ -95,4 +95,20 @@ CREATE TABLE IF NOT EXISTS RAW.RAW_PIT_STOPS (
     CONSTRAINT uq_pit_stops UNIQUE (session_key, driver_number, lap_number)
 );
 
+-- =============================================================================
+-- Raw Tables (LLM-generated narratives)
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS RAW.RAW_SEASON_NARRATIVES (
+    season              INTEGER,
+    constructor_id      VARCHAR,
+    driver_1_code       VARCHAR(3),
+    driver_2_code       VARCHAR(3),
+    narrative_text      VARCHAR(16384),
+    model_id            VARCHAR(100),
+    prompt_hash         VARCHAR(64),
+    generated_at        TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    CONSTRAINT uq_narrative UNIQUE (season, constructor_id, driver_1_code, driver_2_code)
+);
+
 -- NOTE: S3 layer skipped. Data flows directly from API → Snowflake raw tables.
