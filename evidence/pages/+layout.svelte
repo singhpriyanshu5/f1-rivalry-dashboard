@@ -98,61 +98,46 @@
     }
 
     /* ── Hero section ── */
-    :global(.f1-hero) {
+    :global(.f1-hero-compact) {
         text-align: center;
-        padding: 2.5rem 1rem 1.5rem;
-        position: relative;
+        padding: 1rem 1rem 0.5rem;
         background: #0b0b12;
     }
 
-    :global(.f1-hero-badge) {
-        display: inline-block;
-        font-family: 'Saira Condensed', sans-serif;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: #E10600;
-        background: rgba(225, 6, 0, 0.1);
-        border: 1px solid rgba(225, 6, 0, 0.25);
-        padding: 0.3rem 1rem;
-        border-radius: 2px;
-        margin-bottom: 1rem;
+    :global(.f1-hero-title-row) {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 0.6rem;
     }
 
     :global(.f1-hero-title) {
         font-family: 'Saira Condensed', sans-serif;
         font-weight: 900;
-        font-size: 3.2rem;
+        font-size: 1.8rem;
         line-height: 1;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: #f0f0f5;
-        margin-bottom: 0.6rem;
     }
 
     :global(.f1-hero-title span) {
         color: #E10600;
     }
 
+    :global(.f1-hero-divider) {
+        color: #2a2a40;
+        font-size: 1.4rem;
+        font-weight: 300;
+    }
+
     :global(.f1-hero-subtitle) {
         font-family: 'Saira Condensed', sans-serif;
         font-weight: 700;
-        font-size: 1.4rem;
+        font-size: 1rem;
         letter-spacing: 0.25em;
         text-transform: uppercase;
         color: #b8b8cc;
-        margin-bottom: 0.6rem;
-    }
-
-    :global(.f1-hero-sub) {
-        font-family: 'Saira', sans-serif;
-        font-size: 0.95rem;
-        color: #b8b8cc;
-        font-weight: 400;
-        max-width: 520px;
-        margin: 0 auto;
-        line-height: 1.5;
     }
 
     /* ── Controls bar ── */
@@ -160,11 +145,11 @@
         display: flex;
         gap: 1rem;
         align-items: flex-end;
-        padding: 1rem 1.5rem;
+        padding: 0.75rem 1.5rem;
         background: #12121e;
         border: 1px solid #1c1c2e;
         border-radius: 6px;
-        margin: 1rem 0 2rem;
+        margin: 0.5rem 0 0.75rem;
     }
 
     /* ── Driver legend ── */
@@ -173,13 +158,13 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
+        padding: 0.5rem 1.5rem;
         background: #12121e;
         border: 1px solid #1c1c2e;
         border-radius: 6px;
-        margin: -0.5rem 0 1.5rem;
+        margin: 0 0 0.75rem;
         font-family: 'Saira Condensed', sans-serif;
-        font-size: 1.1rem;
+        font-size: 1rem;
         letter-spacing: 0.03em;
     }
     :global(.f1-driver-chip) {
@@ -219,7 +204,7 @@
         background: linear-gradient(135deg, #12121e 0%, #1a1a2e 100%);
         border: 1px solid #2a2a40;
         border-radius: 6px;
-        margin: 0 0 1.5rem;
+        margin: 0 0 0.75rem;
         position: relative;
         overflow: hidden;
     }
@@ -533,19 +518,19 @@
         background: #12121e;
         border: 1px solid #1c1c2e;
         border-radius: 6px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
+        padding: 1rem 1.5rem;
+        margin-bottom: 0.75rem;
     }
 
     :global(.f1-scorecard-title) {
         font-family: 'Saira Condensed', sans-serif;
         font-weight: 800;
-        font-size: 1.1rem;
+        font-size: 0.9rem;
         letter-spacing: 0.08em;
         text-transform: uppercase;
         color: #6b6b80;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.6rem;
     }
 
     :global(.f1-verdict-grid) {
@@ -789,11 +774,11 @@
         gap: 0.5rem;
         flex-wrap: wrap;
         justify-content: center;
-        padding: 0.6rem 1rem;
+        padding: 0.45rem 1rem;
         background: #12121e;
         border: 1px solid #1c1c2e;
         border-radius: 6px;
-        margin-bottom: 1.5rem;
+        margin-bottom: 0.75rem;
         position: sticky;
         top: 6px;
         z-index: 100;

@@ -261,11 +261,12 @@ select round, round_label, driver_code, cumulative_wins from (
 order by round, driver_order
 ```
 
-<div class="f1-hero">
-    <div class="f1-hero-badge">Analytics Dashboard</div>
-    <div class="f1-hero-title">FORMULA <span>1</span></div>
-    <div class="f1-hero-subtitle">TEAMMATE RIVALRY</div>
-    <div class="f1-hero-sub">The only fair comparison in F1 — same car, same strategy options, same machinery. Select a season and constructor to compare teammates head-to-head.</div>
+<div class="f1-hero-compact">
+    <div class="f1-hero-title-row">
+        <span class="f1-hero-title">FORMULA <span>1</span></span>
+        <span class="f1-hero-divider">|</span>
+        <span class="f1-hero-subtitle">TEAMMATE RIVALRY</span>
+    </div>
 </div>
 
 <div class="f1-controls">
