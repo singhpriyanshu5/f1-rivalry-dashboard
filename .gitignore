@@ -9,6 +9,9 @@ __pycache__/
 venv/
 .venv/
 
+# Node
+node_modules/
+
 # Evidence.dev
 evidence/.evidence/
 evidence/build/
