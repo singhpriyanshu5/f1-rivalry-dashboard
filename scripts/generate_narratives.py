@@ -60,6 +60,7 @@ Format EXACTLY like this — no other HTML tags, no wrapper, no markdown:
 <div class="f1-narrative-bullets">
 <div class="f1-narrative-item"><span class="f1-narrative-label">Qualifying</span> 1-2 sentences on quali battle</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Race Day</span> 1-2 sentences on race results/drama</div>
+<div class="f1-narrative-item"><span class="f1-narrative-label">Sprint</span> 1 sentence on sprint race rivalry (omit this item entirely if no sprint data)</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Key Moment</span> 1 sentence on the defining moment, DNF, or momentum shift</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Verdict</span> 1 sentence on who won the intra-team battle</div>
 </div>
@@ -132,6 +133,21 @@ def query_mart_data(cur, season, constructor_id, d1_code, d2_code):
     cols = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
     mart_data["pace_summary"] = [dict(zip(cols, row)) for row in rows]
+
+    # Sprint H2H
+    cur.execute("""
+        SELECT round, round_label, driver_1_code, driver_2_code,
+               sprint_winner_code,
+               driver_1_finish, driver_2_finish,
+               driver_1_points, driver_2_points
+        FROM RAW_ANALYTICS.MART_SPRINT_H2H
+        WHERE season = %s AND constructor_id = %s
+          AND driver_1_code = %s AND driver_2_code = %s
+        ORDER BY round
+    """, (season, constructor_id, d1_code, d2_code))
+    cols = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    mart_data["sprint_h2h"] = [dict(zip(cols, row)) for row in rows]
 
     return mart_data
 

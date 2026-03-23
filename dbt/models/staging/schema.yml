@@ -21,6 +21,19 @@ models:
         tests:
           - not_null
 
+  - name: stg_sprint_results
+    description: Flattened sprint race results with grid/finish positions and points
+    columns:
+      - name: driver_id
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: round
+        tests:
+          - not_null
+
   - name: stg_driver_standings
     description: Cumulative driver standings per round
     columns:

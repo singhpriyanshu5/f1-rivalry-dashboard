@@ -9,7 +9,8 @@ with flattened as (
         r.value:Circuit:circuitName::string as circuit_name,
         r.value:Circuit:Location:locality::string as locality,
         r.value:Circuit:Location:country::string as country,
-        r.value:date::date as race_date
+        r.value:date::date as race_date,
+        r.value:Sprint:date IS NOT NULL as is_sprint_round
     from {{ source('raw', 'raw_schedule') }} s,
     lateral flatten(input => s.raw_data) r
 )

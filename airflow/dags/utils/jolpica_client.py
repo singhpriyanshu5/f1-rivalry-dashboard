@@ -48,6 +48,16 @@ def fetch_results(season: int, round_num: int) -> list[dict]:
     return races[0]["Results"]
 
 
+def fetch_sprint_results(season: int, round_num: int) -> list[dict]:
+    """Fetch sprint race results for a specific round. Returns [] for non-sprint rounds."""
+    url = f"{BASE_URL}/{season}/{round_num}/sprint.json"
+    data = _get(url)
+    races = data["MRData"]["RaceTable"]["Races"]
+    if not races:
+        return []
+    return races[0].get("SprintResults", [])
+
+
 def fetch_driver_standings(season: int, round_num: int) -> list[dict]:
     """Fetch driver standings after a specific round."""
     url = f"{BASE_URL}/{season}/{round_num}/driverStandings.json"

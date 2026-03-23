@@ -40,6 +40,50 @@ where season = ${inputs.season.value}
 order by round
 ```
 
+```sql sprint_filtered
+select * from snowflake.mart_sprint_h2h
+where season = ${inputs.season.value}
+  and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+order by round
+```
+
+```sql sprint_stats
+select
+    count(case when sprint_winner_code = driver_1_code then 1 end) as d1_sprint_wins,
+    count(case when sprint_winner_code = driver_2_code then 1 end) as d2_sprint_wins,
+    min(driver_1_code) as d1_code,
+    min(driver_2_code) as d2_code,
+    sum(driver_1_points) as d1_sprint_points,
+    sum(driver_2_points) as d2_sprint_points,
+    count(*) as sprint_rounds
+from snowflake.mart_sprint_h2h
+where season = ${inputs.season.value}
+  and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+```
+
+```sql sprint_points_by_round
+select
+    round_label,
+    driver_code,
+    points
+from (
+    select round, round_label, driver_1_code as driver_code, driver_1_points as points
+    from snowflake.mart_sprint_h2h
+    where season = ${inputs.season.value}
+      and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+    union all
+    select round, round_label, driver_2_code as driver_code, driver_2_points as points
+    from snowflake.mart_sprint_h2h
+    where season = ${inputs.season.value}
+      and constructor_id = '${inputs.constructor.value}'
+      and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+)
+order by round, driver_code
+```
+
 ```sql points_filtered
 select * from snowflake.mart_points_trajectory
 where season = ${inputs.season.value}
@@ -281,6 +325,7 @@ limit 1
 <nav class="f1-section-nav">
     <a href="#section-qualifying" class="f1-nav-pill red">Quali</a>
     <a href="#section-race" class="f1-nav-pill teal">Race</a>
+    {#if sprint_filtered.length > 0}<a href="#section-sprint" class="f1-nav-pill yellow">Sprint</a>{/if}
     <a href="#section-points" class="f1-nav-pill blue">Points</a>
     <a href="#section-grid" class="f1-nav-pill green">Grid vs Finish</a>
     <a href="#section-pitstops" class="f1-nav-pill purple">Pit Stops</a>
@@ -324,6 +369,18 @@ where season = ${inputs.season.value}
             <div class="f1-verdict-winner">{season_summary[0].pit_verdict}</div>
             <div class="f1-verdict-detail">{season_summary[0].d1_avg_pit}s – {season_summary[0].d2_avg_pit}s avg</div>
         </div>
+        {#if season_summary[0].sprint_rounds > 0}
+        <div class="f1-verdict-card {season_summary[0].sprint_race_verdict === season_summary[0].driver_1_code ? 'winner-d1' : season_summary[0].sprint_race_verdict === season_summary[0].driver_2_code ? 'winner-d2' : 'winner-tie'}">
+            <div class="f1-verdict-label">Sprint Race</div>
+            <div class="f1-verdict-winner">{season_summary[0].sprint_race_verdict}</div>
+            <div class="f1-verdict-detail">{season_summary[0].d1_sprint_wins} – {season_summary[0].d2_sprint_wins}</div>
+        </div>
+        <div class="f1-verdict-card {season_summary[0].sprint_quali_verdict === season_summary[0].driver_1_code ? 'winner-d1' : season_summary[0].sprint_quali_verdict === season_summary[0].driver_2_code ? 'winner-d2' : 'winner-tie'}">
+            <div class="f1-verdict-label">Sprint Quali</div>
+            <div class="f1-verdict-winner">{season_summary[0].sprint_quali_verdict}</div>
+            <div class="f1-verdict-detail">{season_summary[0].d1_sprint_quali_wins} – {season_summary[0].d2_sprint_quali_wins}</div>
+        </div>
+        {/if}
     </div>
 </div>
 
@@ -499,6 +556,91 @@ where season = ${inputs.season.value}
 </div>
 </div>
 
+{#if sprint_filtered.length > 0}
+
+<div class="f1-section yellow" id="section-sprint">
+    <div class="f1-section-title">Sprint Battle</div>
+    <div class="f1-section-subtitle">Sprint weekends add another dimension to the rivalry — shorter races, fewer laps, no pit stops.</div>
+    <div class="f1-stats-row">
+        <div class="f1-stat-card accent-red">
+
+<BigValue
+    data={sprint_stats}
+    value=d1_sprint_wins
+    title="{sprint_stats[0].d1_code} Sprint H2H"
+/>
+
+</div>
+        <div class="f1-stat-card accent-teal">
+
+<BigValue
+    data={sprint_stats}
+    value=d2_sprint_wins
+    title="{sprint_stats[0].d2_code} Sprint H2H"
+/>
+
+</div>
+        <div class="f1-stat-card accent-red">
+
+<BigValue
+    data={sprint_stats}
+    value=d1_sprint_points
+    title="{sprint_stats[0].d1_code} Sprint Points"
+/>
+
+</div>
+        <div class="f1-stat-card accent-teal">
+
+<BigValue
+    data={sprint_stats}
+    value=d2_sprint_points
+    title="{sprint_stats[0].d2_code} Sprint Points"
+/>
+
+</div>
+    </div>
+    <div class="f1-chart-wrap">
+
+<BarChart
+    data={sprint_points_by_round}
+    x=round_label
+    y=points
+    series=driver_code
+    seriesColors={{ [sprint_stats[0].d1_code]: '#E10600', [sprint_stats[0].d2_code]: '#00D2BE' }}
+    sort=false
+    title="Sprint Points Per Round"
+    yAxisTitle="Points"
+    xAxisTitle="Round"
+    labels=true
+    type=grouped
+/>
+
+</div>
+    <div class="f1-chart-wrap f1-detail-table">
+        <div class="f1-chart-label">Sprint Round-by-Round Detail</div>
+
+<DataTable
+    data={sprint_filtered}
+    rows=8
+>
+    <Column id=round title="Rd" />
+    <Column id=locality title="Race" />
+    <Column id=driver_1_code title="Driver 1" />
+    <Column id=driver_1_grid title="Grid" />
+    <Column id=driver_1_finish title="Finish" />
+    <Column id=driver_1_points title="Pts" />
+    <Column id=driver_2_code title="Driver 2" />
+    <Column id=driver_2_grid title="Grid" />
+    <Column id=driver_2_finish title="Finish" />
+    <Column id=driver_2_points title="Pts" />
+    <Column id=sprint_winner_code title="Winner" />
+</DataTable>
+
+</div>
+</div>
+
+{/if}
+
 <div class="f1-section blue" id="section-points">
     <div class="f1-section-title">Points Trajectory</div>
     <div class="f1-section-subtitle">Championship points accumulation — teammate comparison across the season.</div>
@@ -516,6 +658,7 @@ where season = ${inputs.season.value}
     yAxisTitle="Cumulative Points"
 />
 
+<div class="f1-chart-note">Includes sprint race points where applicable.</div>
 </div>
 </div>
 

@@ -55,6 +55,16 @@ models:
         tests:
           - not_null
 
+  - name: mart_sprint_h2h
+    description: Sprint race head-to-head between teammates per round (sprint weekends only)
+    columns:
+      - name: season
+        tests:
+          - not_null
+      - name: constructor_id
+        tests:
+          - not_null
+
   - name: mart_season_narrative
     description: LLM-generated season narrative per driver pairing - AI Season Story
     columns:

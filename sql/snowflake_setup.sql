@@ -42,6 +42,15 @@ CREATE TABLE IF NOT EXISTS RAW.RAW_RESULTS (
     CONSTRAINT uq_results UNIQUE (season, round)
 );
 
+CREATE TABLE IF NOT EXISTS RAW.RAW_SPRINT_RESULTS (
+    raw_data        VARIANT,
+    season          INTEGER,
+    round           INTEGER,
+    _ingested_at    TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
+    _source_file    VARCHAR,
+    CONSTRAINT uq_sprint_results UNIQUE (season, round)
+);
+
 CREATE TABLE IF NOT EXISTS RAW.RAW_DRIVER_STANDINGS (
     raw_data        VARIANT,
     season          INTEGER,
