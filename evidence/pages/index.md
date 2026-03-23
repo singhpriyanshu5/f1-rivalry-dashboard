@@ -312,17 +312,16 @@ where season = ${inputs.season.value}
 limit 1
 ```
 
-{#if narrative.length > 0}
-
-<div class="f1-narrative-card">
-    <div class="f1-narrative-badge">AI Season Story</div>
-    <div class="f1-narrative-text">{@html narrative[0].narrative_text}</div>
-    <div class="f1-narrative-meta">Based on {race_filtered.length} rounds of {inputs.season.value} season data · Powered by {narrative[0].model_id}</div>
-</div>
-
-{/if}
+```sql season_summary
+select * from snowflake.mart_season_summary
+where season = ${inputs.season.value}
+  and constructor_id = '${inputs.constructor.value}'
+  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
+```
 
 <nav class="f1-section-nav">
+    <a href="#section-verdict" class="f1-nav-pill silver">Verdict</a>
+    {#if narrative.length > 0}<a href="#section-ai-story" class="f1-nav-pill gradient">AI Story</a>{/if}
     <a href="#section-qualifying" class="f1-nav-pill red">Quali</a>
     <a href="#section-race" class="f1-nav-pill teal">Race</a>
     {#if sprint_filtered.length > 0}<a href="#section-sprint" class="f1-nav-pill yellow">Sprint</a>{/if}
@@ -334,14 +333,7 @@ limit 1
     <a href="#section-pace" class="f1-nav-pill orange">Lap Pace</a>
 </nav>
 
-```sql season_summary
-select * from snowflake.mart_season_summary
-where season = ${inputs.season.value}
-  and constructor_id = '${inputs.constructor.value}'
-  and driver_1_code || '|' || driver_2_code = '${inputs.pairing.value}'
-```
-
-<div class="f1-scorecard">
+<div class="f1-scorecard" id="section-verdict">
     <div class="f1-scorecard-title">Season Verdict</div>
     <div class="f1-verdict-grid">
         <div class="f1-verdict-card {season_summary[0].quali_verdict === season_summary[0].driver_1_code ? 'winner-d1' : season_summary[0].quali_verdict === season_summary[0].driver_2_code ? 'winner-d2' : 'winner-tie'}">
@@ -383,6 +375,22 @@ where season = ${inputs.season.value}
         {/if}
     </div>
 </div>
+
+{#if narrative.length > 0}
+
+<details class="f1-narrative-collapsible" id="section-ai-story" open>
+    <summary class="f1-narrative-summary">
+        <div class="f1-narrative-summary-row">
+            <div class="f1-narrative-badge">AI Season Story</div>
+            <span class="f1-narrative-expand-hint">click to expand</span>
+            <span class="f1-narrative-toggle-icon">▲</span>
+        </div>
+        <div class="f1-narrative-text">{@html narrative[0].narrative_text}</div>
+        <div class="f1-narrative-meta">Based on {race_filtered.length} rounds of {inputs.season.value} season data · Powered by {narrative[0].model_id}</div>
+    </summary>
+</details>
+
+{/if}
 
 <div class="f1-section" id="section-qualifying">
     <div class="f1-section-title">Qualifying Battle</div>
