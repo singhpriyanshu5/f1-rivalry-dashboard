@@ -350,6 +350,10 @@
         background: #FF6F00;
     }
 
+    :global(.f1-section.yellow::before) {
+        background: #FFD600;
+    }
+
     :global(.f1-section.cyan::before) {
         background: #00BCD4;
     }
@@ -814,6 +818,15 @@
     :global(.f1-nav-pill.cyan:hover) {
         background: rgba(0, 188, 212, 0.2);
         border-color: rgba(0, 188, 212, 0.3);
+    }
+
+    :global(.f1-nav-pill.yellow) {
+        color: #FFD600;
+        background: rgba(255, 214, 0, 0.08);
+    }
+    :global(.f1-nav-pill.yellow:hover) {
+        background: rgba(255, 214, 0, 0.2);
+        border-color: rgba(255, 214, 0, 0.3);
     }
 
     :global(.f1-nav-pill.orange) {

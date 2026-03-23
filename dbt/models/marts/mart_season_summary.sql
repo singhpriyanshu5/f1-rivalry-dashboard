@@ -41,6 +41,23 @@ pits as (
         round(avg(driver_2_pit_duration_s), 2) as d2_avg_pit
     from {{ ref('mart_pit_stop_h2h') }}
     group by season, constructor_id, driver_1_code, driver_2_code
+),
+
+sprint as (
+    select
+        season,
+        constructor_id,
+        driver_1_code,
+        driver_2_code,
+        count(case when sprint_winner_code = driver_1_code then 1 end) as d1_sprint_wins,
+        count(case when sprint_winner_code = driver_2_code then 1 end) as d2_sprint_wins,
+        count(case when driver_1_grid < driver_2_grid then 1 end) as d1_sprint_quali_wins,
+        count(case when driver_2_grid < driver_1_grid then 1 end) as d2_sprint_quali_wins,
+        sum(driver_1_points) as d1_sprint_points,
+        sum(driver_2_points) as d2_sprint_points,
+        count(*) as sprint_rounds
+    from {{ ref('mart_sprint_h2h') }}
+    group by season, constructor_id, driver_1_code, driver_2_code
 )
 
 select
@@ -95,7 +112,28 @@ select
         when coalesce(p.d1_avg_pit, 0) > 0 and coalesce(p.d2_avg_pit, 0) > 0
              and p.d2_avg_pit < p.d1_avg_pit then r.driver_2_code
         else 'TIE'
-    end as pit_verdict
+    end as pit_verdict,
+
+    -- Sprint race verdict
+    coalesce(s.d1_sprint_wins, 0) as d1_sprint_wins,
+    coalesce(s.d2_sprint_wins, 0) as d2_sprint_wins,
+    coalesce(s.d1_sprint_points, 0) as d1_sprint_points,
+    coalesce(s.d2_sprint_points, 0) as d2_sprint_points,
+    coalesce(s.sprint_rounds, 0) as sprint_rounds,
+    case
+        when coalesce(s.d1_sprint_wins, 0) > coalesce(s.d2_sprint_wins, 0) then r.driver_1_code
+        when coalesce(s.d2_sprint_wins, 0) > coalesce(s.d1_sprint_wins, 0) then r.driver_2_code
+        else 'TIE'
+    end as sprint_race_verdict,
+
+    -- Sprint qualifying verdict
+    coalesce(s.d1_sprint_quali_wins, 0) as d1_sprint_quali_wins,
+    coalesce(s.d2_sprint_quali_wins, 0) as d2_sprint_quali_wins,
+    case
+        when coalesce(s.d1_sprint_quali_wins, 0) > coalesce(s.d2_sprint_quali_wins, 0) then r.driver_1_code
+        when coalesce(s.d2_sprint_quali_wins, 0) > coalesce(s.d1_sprint_quali_wins, 0) then r.driver_2_code
+        else 'TIE'
+    end as sprint_quali_verdict
 
 from race r
 left join quali q
@@ -108,3 +146,8 @@ left join pits p
     and r.constructor_id = p.constructor_id
     and r.driver_1_code = p.driver_1_code
     and r.driver_2_code = p.driver_2_code
+left join sprint s
+    on r.season = s.season
+    and r.constructor_id = s.constructor_id
+    and r.driver_1_code = s.driver_1_code
+    and r.driver_2_code = s.driver_2_code

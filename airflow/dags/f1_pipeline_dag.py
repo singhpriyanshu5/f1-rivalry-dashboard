@@ -31,8 +31,8 @@ import snowflake.connector
 import requests as http_requests
 
 from utils.jolpica_client import (
-    fetch_qualifying, fetch_results, fetch_driver_standings,
-    fetch_laps, fetch_pit_stops, fetch_schedule,
+    fetch_qualifying, fetch_results, fetch_sprint_results,
+    fetch_driver_standings, fetch_laps, fetch_pit_stops, fetch_schedule,
 )
 
 logger = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ def _load_array_to_raw(records, table_name, season, round_num):
 
 
 def _ingest_single_round(season, round_num):
-    """Ingest all 6 data sources for a single round."""
+    """Ingest all 7 data sources for a single round."""
     logger.info(f"Ingesting {season} R{round_num}...")
 
     data = fetch_qualifying(season, round_num)
@@ -102,6 +102,9 @@ def _ingest_single_round(season, round_num):
 
     data = fetch_results(season, round_num)
     _load_array_to_raw(data, "results", season, round_num)
+
+    data = fetch_sprint_results(season, round_num)
+    _load_array_to_raw(data, "sprint_results", season, round_num)
 
     data = fetch_driver_standings(season, round_num)
     _load_array_to_raw(data, "driver_standings", season, round_num)
@@ -253,6 +256,7 @@ Format EXACTLY like this — no other HTML tags, no wrapper, no markdown:
 <div class="f1-narrative-bullets">
 <div class="f1-narrative-item"><span class="f1-narrative-label">Qualifying</span> 1-2 sentences on quali battle</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Race Day</span> 1-2 sentences on race results/drama</div>
+<div class="f1-narrative-item"><span class="f1-narrative-label">Sprint</span> 1 sentence on sprint race rivalry (omit this item entirely if no sprint data)</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Key Moment</span> 1 sentence on the defining moment, DNF, or momentum shift</div>
 <div class="f1-narrative-item"><span class="f1-narrative-label">Verdict</span> 1 sentence on who won the intra-team battle</div>
 </div>
@@ -331,6 +335,21 @@ def _query_mart_data(cur, season, constructor_id, d1_code, d2_code):
     cols = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
     mart_data["pace_summary"] = [dict(zip(cols, row)) for row in rows]
+
+    # Sprint H2H
+    cur.execute("""
+        SELECT round, round_label, driver_1_code, driver_2_code,
+               sprint_winner_code,
+               driver_1_finish, driver_2_finish,
+               driver_1_points, driver_2_points
+        FROM RAW_ANALYTICS.MART_SPRINT_H2H
+        WHERE season = %s AND constructor_id = %s
+          AND driver_1_code = %s AND driver_2_code = %s
+        ORDER BY round
+    """, (season, constructor_id, d1_code, d2_code))
+    cols = [desc[0] for desc in cur.description]
+    rows = cur.fetchall()
+    mart_data["sprint_h2h"] = [dict(zip(cols, row)) for row in rows]
 
     return mart_data
 
